@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Webseite</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+    <nav>
+        <div class="logo">
+            <a href="./index.html"><img src="logo.png" alt="logo"></a>
+        </div>
+        <ul class="navbar">
+            <li><a href="./index.html">Home</a></li>
+            <li><a href="./about.html">Über mich</a></li>
+            <li><a href="./contact.html">Kontakt</a></li>
+        </ul>
+       
+        <div class="search-box">
+            <input type="text" id="searchinput" placeholder="Suchen..." required>
+            <button onclick="search()">Suchen</button>
+        </div>
+        
+    </nav>
+</header>
+<div id="searchresults"></div>
+<div id="content">
+    <article>
+        <h2>HTML in 5 Minuten</h2>
+        <p>Veröffentlicht am: <time datetime="2024-04-26">26. April 2024</time></p>
+        <figure>
+            <iframe width="720" height="480" src="https://www.youtube.com/embed/salY_Sm6mv4?si=iYeACcVeE-ZHYZDl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </figure>
+    </article>
+    <article>
+        <h2>Herzlich willkommen auf meiner Webseite!</h2>
+        <p>Veröffentlicht am: <time datetime="2024-04-24">24. April 2024</time></p>
+        <p>Hier finden Sie Informationen zu meiner Arbeit, meinen Projekten und meinen Interessen. Dieser Bereich wird regelmäßig aktualisiert, also schauen Sie gerne öfter vorbei!</p>
+        <p>Dieser Artikel soll Ihnen einen Einblick geben, was Sie auf dieser Webseite erwarten können. Von technischen Tutorials bis hin zu persönlichen Blog-Beiträgen – es gibt hier viel zu entdecken!</p>
+        <figure>
+            <img src="https://aec-business.com/wp-content/uploads/2013/05/IT_strategy_process1.jpg" alt="IT Bild">
+            <figcaption>IT ist meine ganze Welt</figcaption>
+        </figure>
+    </article>
+
+    <article>
+        <h2>Die Bedeutung von Künstlicher Intelligenz in der Informationstechnologie</h2>
+        <p>Veröffentlicht am: <time datetime="2024-04-25">25. April 2024</time></p>
+        <p>Künstliche Intelligenz (KI) hat in der Informationstechnologie eine immer größere Bedeutung. Von der Automatisierung wiederkehrender Aufgaben bis hin zur Vorhersage von Trends und Mustern hat KI das Potenzial, viele Aspekte der IT zu revolutionieren.</p>
+        <p>In diesem Artikel erkunden wir, wie KI in Bereichen wie Datenanalyse, Cybersecurity, maschinelles Lernen und Kundeninteraktion eingesetzt wird. Wir diskutieren auch die Herausforderungen und Chancen, die mit der Integration von KI in die IT verbunden sind.</p>
+        <figure>
+            <img src="https://robofunktion-systems.com/wp-content/uploads/2023/06/KI-2048x1152.png.webp" alt="Künstliche Intelligenz">
+            <figcaption>Künstliche Intelligenz (KI) spielt eine wichtige Rolle in der modernen Informationstechnologie</figcaption>
+        </figure>
+    </article>
+</div>
+<div class="lr-container">
+    <section class="homepage-reg">
+        <h2>Anmelden</h2>
+        <a href="./register.html"><button>Registeriern</button></a>
+    </section>
+
+    <section class="homepage-login">
+        <h2>Einloggen</h2>
+        <a href="./login.html"><button>Login</button></a>  
+    </section>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <p>&copy; 2024 Meine Webseite. Alle Rechte vorbehalten.</p>
+    </div>
+</footer>
+<script src="Search.js"></script>
+</body>
+</html>

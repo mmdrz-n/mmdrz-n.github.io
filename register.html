@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anmelden</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">
+                <a href="./index.html"><img src="logo.png" alt="logo"></a>
+            </div>
+            <ul class="navbar">
+                <li><a href="./index.html">Home</a></li>
+                <li><a href="./about.html">Über mich</a></li>
+                <li><a href="./contact.html">Kontakt</a></li>
+            </ul>
+            <div class="search-box">
+                <input type="text" placeholder="Suchen...">
+                <button type="submit">Suchen</button>
+            </div>
+        </nav>
+    </header>
+    <section class="lr">
+        <h2><strong>Anmelden</strong></h2>
+        <form id="registerform" onsubmit="return validateform()">
+            <label>Name :</label>
+            <input name="name" type="text" placeholder="vollständige Name" required>
+            <br><br>
+            <label>Benutzername :</label>
+            <input name="username" type="text" placeholder="Benutzername" required>
+            <br><br>
+            <label>Passwort :</label>
+            <input name="password" type="password" placeholder="Passwort" required>
+            <br><br>
+            <label>Passwort wiederholen :</label>
+            <input name="confirmpassword" type="password" placeholder="Passwort wiederholen" required>
+            <br><br>
+            <label>Geburtstagdatum :</label>
+            <input type="date" name="Date" required>
+            <br><br>
+            <label>E-Mail-Adresse :</label>
+            <input type="email" name="email" placeholder="E-Mail-Adresse" required>
+            <br><br>
+            <label>Telefonnummer :</label>
+            <input type="tel" name="tel" placeholder="Telefonnummer" required>
+            <br><br>
+            <label>Geschlecht :</label>
+            <select name="gender" required>
+                <option value="M">Mann</option>
+                <option value="F">Frau</option>
+                <option value="N">lieber nicht sagen</option>
+            </select>
+            <br><br>
+            <div class="job-position">
+                <label>Bitte wählen Sie Ihre Stelle aus:</label>
+                <div class="radio-group" required>
+                    <input type="radio" id="it_technician" name="position">
+                    <label for="it_technician">IT technician</label>
+                    <input type="radio" id="support_specialist" name="position">
+                    <label for="support_specialist">Support specialist</label>
+                    <input type="radio" id="web_developer" name="position">
+                    <label for="web_developer">Web developer</label>
+                    <input type="radio" id="other" name="position">
+                    <label for="other">andere</label>
+                </div>
+            </div>
+            <br>
+            <label>Kommentare :</label>
+            <textarea name="comment" cols="30" rows="3" placeholder="Schreiben Sie bitte hier Ihre Kommentare"></textarea>
+            <br><br>
+            <button type="submit">Registeriern</button>
+        </form>
+    </section>
+    
+    <footer>
+    <div class="footer-content">
+        <p>&copy; 2024 Meine Webseite. Alle Rechte vorbehalten.</p>
+    </div>
+</footer>
+    <script src="formvalidation.js"></script>
+</body>
+</html>
