@@ -15,9 +15,9 @@
   --glow-c: 0 0 8px #00d4f088, 0 0 28px #00d4f022;
   --glow-g: 0 0 8px #00e89688, 0 0 28px #00e89622;
   --glow-gold: 0 0 8px #ffc94766;
-  --font-mono: "Share Tech Mono", monospace;
+  --font-mono: "JetBrains Mono", "Courier New", monospace;
   --font-hd: "Orbitron", sans-serif;
-  --font-body: "Exo 2", sans-serif;
+  --font-body: "Rajdhani", "Segoe UI", sans-serif;
   --font-read: "Source Serif 4", Georgia, serif;
   --nav-h: 72px;
   --radius: 6px;
@@ -295,16 +295,17 @@ nav {
 }
 
 .pill {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
   letter-spacing: 0.1em;
   padding: 0.35rem 0.75rem;
-  border: 1px solid var(--border);
-  color: var(--textdim);
+  border: 1px solid var(--purple);
+  color: var(--purple);
+  font-weight: 700;
   text-transform: uppercase;
 }
 
-.pill.highlight { border-color: var(--cyan); color: var(--cyan); }
+.pill.highlight { border-color: var(--purple); color: var(--purple); }
 
 .hero-btns {
   margin-top: 2rem;
@@ -417,9 +418,10 @@ section { padding: 5.5rem 2.5rem; }
 }
 
 .section-num {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--green);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--purple);
   letter-spacing: 0.2em;
 }
 
@@ -479,9 +481,10 @@ section { padding: 5.5rem 2.5rem; }
 .path-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
 
 .path-title {
-  font-family: var(--font-hd);
-  font-size: 0.75rem;
-  color: var(--cyan);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--purple);
   letter-spacing: 0.08em;
   margin-bottom: 0.4rem;
 }
@@ -504,9 +507,10 @@ section { padding: 5.5rem 2.5rem; }
 }
 
 .forti-box .fi-title {
-  font-family: var(--font-hd);
-  font-size: 0.78rem;
-  color: var(--orange);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--purple);
   letter-spacing: 0.1em;
   margin-bottom: 0.35rem;
 }
@@ -514,11 +518,12 @@ section { padding: 5.5rem 2.5rem; }
 .fi-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
 
 .forti-tag {
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 700;
   padding: 0.2rem 0.55rem;
-  border: 1px solid var(--orange);
-  color: var(--orange);
+  border: 1px solid var(--purple);
+  color: var(--purple);
   letter-spacing: 0.08em;
 }
 
@@ -543,9 +548,10 @@ section { padding: 5.5rem 2.5rem; }
 }
 
 .stat-label {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  color: var(--textdim);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--purple);
   letter-spacing: 0.14em;
   margin-top: 0.3rem;
 }
@@ -606,9 +612,10 @@ section { padding: 5.5rem 2.5rem; }
 }
 
 .teach-title {
-  font-family: var(--font-hd);
-  font-size: 0.85rem;
-  color: var(--gold);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--purple);
   letter-spacing: 0.06em;
   margin-bottom: 0.6rem;
 }
@@ -722,10 +729,10 @@ section { padding: 5.5rem 2.5rem; }
 }
 
 .skill-name { font-family: var(--font-hd); font-size: 0.82rem; color: #fff; letter-spacing: 0.04em; }
-.skill-level { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.15rem; }
-.skill-level.expert { color: var(--cyan); }
-.skill-level.advanced { color: var(--green); }
-.skill-level.intermediate { color: var(--orange); }
+.skill-level { font-family: var(--font-body); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.15rem; color: var(--purple); }
+.skill-level.expert { color: var(--purple); }
+.skill-level.advanced { color: var(--purple); }
+.skill-level.intermediate { color: var(--purple); }
 .skill-experience { font-family: var(--font-mono); font-size: 0.62rem; color: var(--green); margin-top: 0.2rem; }
 .skill-desc { font-family: var(--font-mono); font-size: 0.68rem; color: var(--textdim); line-height: 1.5; margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border); }
 
@@ -763,11 +770,11 @@ section { padding: 5.5rem 2.5rem; }
 .project-card:hover { border-color: var(--cyan); transform: translateY(-4px); }
 .project-card:hover::before { transform: scaleX(1); }
 
-.project-type { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.18em; color: var(--green); margin-bottom: 0.7rem; }
+.project-type { font-family: var(--font-body); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; color: var(--purple); margin-bottom: 0.7rem; }
 .project-title { font-family: var(--font-hd); font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.7rem; letter-spacing: 0.04em; }
 .project-desc { font-size: 0.86rem; color: var(--text); line-height: 1.7; margin-bottom: 1rem; }
 .project-tags { display: flex; gap: 0.45rem; flex-wrap: wrap; }
-.tag { font-family: var(--font-mono); font-size: 0.58rem; padding: 0.18rem 0.55rem; border: 1px solid var(--border); color: var(--textdim); letter-spacing: 0.08em; }
+.tag { font-family: var(--font-body); font-size: 0.74rem; font-weight: 700; padding: 0.18rem 0.55rem; border: 1px solid var(--purple); color: var(--purple); letter-spacing: 0.08em; }
 
 /* ── LAB ── */
 #lab { background: var(--bg2); }
@@ -795,10 +802,11 @@ section { padding: 5.5rem 2.5rem; }
 .lab-panel-hdr {
   padding: 0.9rem 1.2rem;
   border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
   letter-spacing: 0.15em;
-  color: var(--textdim);
+  color: var(--purple);
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -825,8 +833,9 @@ section { padding: 5.5rem 2.5rem; }
 .flashcard.flipped { border-color: var(--gold); }
 
 .fc-label {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--purple);
   letter-spacing: 0.15em;
   margin-bottom: 0.8rem;
@@ -841,9 +850,9 @@ section { padding: 5.5rem 2.5rem; }
 
 .fc-answer {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--green);
-  line-height: 1.7;
+  font-size: 0.95rem;
+  color: #5dffb8;
+  line-height: 1.75;
   display: none;
 }
 
@@ -953,8 +962,9 @@ section { padding: 5.5rem 2.5rem; }
 .digital-icon { font-size: 1.6rem; margin-bottom: 0.7rem; }
 
 .digital-title {
-  font-family: var(--font-hd);
-  font-size: 0.82rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--purple);
   letter-spacing: 0.06em;
   margin-bottom: 0.5rem;
