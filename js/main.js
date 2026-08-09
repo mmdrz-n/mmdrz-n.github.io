@@ -309,12 +309,43 @@ document.getElementById("cidr-input").addEventListener("keydown", (e) => {
   if (e.key === "Enter") document.getElementById("calc-subnet").click();
 });
 
-// ── Copy email ──
+// ── AI fact button ──
+const notif = document.getElementById("notif");
+const aiFacts = [
+  "🤖 The term 'Artificial Intelligence' was coined in 1956 at Dartmouth College.",
+  "🤖 A neural network's 'neurons' are just weighted math functions, not real brain cells.",
+  "🤖 GPT stands for Generative Pre-trained Transformer.",
+  "🤖 The Transformer architecture powering modern AI was introduced in a 2017 paper called 'Attention Is All You Need'.",
+  "🤖 AI can now generate working firewall configs — but it still can't make coffee.",
+  "🤖 The first chatbot, ELIZA, was built in 1966 and just rephrased your sentences as questions.",
+  "🤖 Deep Blue beat chess champion Garry Kasparov in 1997.",
+  "🤖 Training a large language model can use more electricity than some small towns.",
+  "🤖 AI models don't 'think' — they predict the most statistically likely next token.",
+  "🤖 The word 'robot' comes from the Czech word 'robota', meaning forced labor.",
+  "🤖 Some AI models can now write, debug, and explain firewall policies faster than a junior engineer.",
+  "🤖 Reinforcement learning is how AI learned to beat humans at Go, a game with more positions than atoms in the universe.",
+  "🤖 AI hallucinations aren't bugs exactly — they're confident guesses dressed up as facts.",
+  "🤖 The first AI 'winter' happened in the 1970s when funding and hype both collapsed.",
+  "🤖 Fun fact: even Claude doesn't know exactly why it says what it says — just like your brain and its neurons.",
+];
+
+const aiFactBtn = document.getElementById("ai-fact-btn");
+aiFactBtn.addEventListener("click", () => {
+  const fact = aiFacts[Math.floor(Math.random() * aiFacts.length)];
+  notif.textContent = fact;
+  notif.classList.add("ai-mode");
+  notif.classList.remove("show");
+  void notif.offsetWidth; // restart animation
+  notif.classList.add("show");
+  clearTimeout(window.__notifTimer);
+  window.__notifTimer = setTimeout(() => {
+    notif.classList.remove("show");
+  }, 4500);
+});
+
+// ── Copy email (silent, no notification) ──
 document.getElementById("email-link").addEventListener("click", (e) => {
   if (e.ctrlKey || e.metaKey) return;
   e.preventDefault();
   navigator.clipboard.writeText("mreza.nobahari@gmail.com").catch(() => {});
-  const notif = document.getElementById("notif");
-  notif.classList.add("show");
-  setTimeout(() => notif.classList.remove("show"), 2500);
 });
