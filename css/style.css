@@ -29,7 +29,9 @@
 html { scroll-behavior: smooth; scroll-padding-top: var(--nav-h); }
 
 body {
-  background: var(--bg);
+  background:
+    linear-gradient(180deg, rgba(5, 7, 12, 0.94), rgba(5, 7, 12, 0.96)),
+    url("https://images.unsplash.com/photo-1524234107056-1c1f48f64ab8?fm=jpg&q=80&w=1920&auto=format&fit=crop") center / cover no-repeat fixed;
   color: var(--text);
   font-family: var(--font-body);
   overflow-x: hidden;
