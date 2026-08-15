@@ -221,7 +221,7 @@ nav {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 40% 40%, transparent 15%, var(--bg) 75%);
+  background: radial-gradient(ellipse at 40% 40%, transparent 15%, rgba(3, 5, 8, 0.6) 75%);
 }
 
 .hero-inner {
