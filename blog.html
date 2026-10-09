@@ -1,274 +1,124 @@
 <!DOCTYPE html>
-
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Knowledge Lab // Blog - MR::NOBAHARI</title>
-<!-- Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<!-- Google Fonts: Sora and Hanken Grotesk -->
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Sora:wght@600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<!-- Tailwind Configuration (Design System 2) -->
-<script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            "colors": {
-                    "inverse-primary": "#6932ea",
-                    "on-primary-fixed": "#20005e",
-                    "on-tertiary-fixed": "#241a00",
-                    "tertiary": "#e9c349",
-                    "on-tertiary-container": "#4f3d00",
-                    "on-tertiary": "#3c2f00",
-                    "outline": "#948ea1",
-                    "inverse-on-surface": "#313030",
-                    "on-background": "#e5e2e1",
-                    "on-secondary-fixed": "#002022",
-                    "surface-bright": "#3a3939",
-                    "secondary-fixed": "#74f5ff",
-                    "on-tertiary-fixed-variant": "#574500",
-                    "surface-container-lowest": "#0e0e0e",
-                    "error-container": "#93000a",
-                    "on-error-container": "#ffdad6",
-                    "deep-charcoal": "#121212",
-                    "secondary-container": "#00f1fe",
-                    "on-primary": "#370095",
-                    "on-surface-variant": "#cbc3d8",
-                    "on-secondary-fixed-variant": "#004f54",
-                    "surface-container-low": "#1c1b1b",
-                    "surface-tint": "#cdbdff",
-                    "error": "#ffb4ab",
-                    "inverse-surface": "#e5e2e1",
-                    "surface-variant": "#353534",
-                    "secondary-fixed-dim": "#00dbe7",
-                    "on-surface": "#e5e2e1",
-                    "tertiary-container": "#cca730",
-                    "tertiary-fixed-dim": "#e9c349",
-                    "surface-container-high": "#2a2a2a",
-                    "tertiary-fixed": "#ffe088",
-                    "primary-container": "#7d4cff",
-                    "surface-container-highest": "#353534",
-                    "primary-fixed": "#e8ddff",
-                    "surface-container": "#201f1f",
-                    "surface-border": "rgba(255, 255, 255, 0.12)",
-                    "on-error": "#690005",
-                    "surface-dim": "#131313",
-                    "secondary": "#ddfcff",
-                    "midnight-violet": "#1A0B2E",
-                    "outline-variant": "#494455",
-                    "on-secondary": "#00363a",
-                    "amethyst-glow": "#9D7BFF",
-                    "surface": "#131313",
-                    "on-primary-container": "#fcf6ff",
-                    "on-primary-fixed-variant": "#5000cf",
-                    "on-secondary-container": "#006a70",
-                    "background": "#131313",
-                    "primary": "#cdbdff",
-                    "primary-fixed-dim": "#cdbdff"
-            },
-            "borderRadius": {
-                    "DEFAULT": "0.25rem",
-                    "lg": "0.5rem",
-                    "xl": "0.75rem",
-                    "full": "9999px"
-            },
-            "spacing": {
-                    "margin-mobile": "16px",
-                    "xs": "4px",
-                    "base": "8px",
-                    "md": "24px",
-                    "margin-desktop": "64px",
-                    "gutter": "24px",
-                    "xl": "80px",
-                    "sm": "12px",
-                    "lg": "48px"
-            },
-            "fontFamily": {
-                    "caption": [
-                            "Hanken Grotesk"
-                    ],
-                    "headline-md": [
-                            "Sora"
-                    ],
-                    "label-mono": [
-                            "JetBrains Mono"
-                    ],
-                    "body-md": [
-                            "Hanken Grotesk"
-                    ],
-                    "display-lg": [
-                            "Sora"
-                    ],
-                    "body-lg": [
-                            "Hanken Grotesk"
-                    ],
-                    "display-lg-mobile": [
-                            "Sora"
-                    ]
-            },
-            "fontSize": {
-                    "caption": [
-                            "12px",
-                            {
-                                    "lineHeight": "16px",
-                                    "fontWeight": "500"
-                            }
-                    ],
-                    "headline-md": [
-                            "24px",
-                            {
-                                    "lineHeight": "32px",
-                                    "fontWeight": "600"
-                            }
-                    ],
-                    "label-mono": [
-                            "14px",
-                            {
-                                    "lineHeight": "20px",
-                                    "letterSpacing": "0.05em",
-                                    "fontWeight": "500"
-                            }
-                    ],
-                    "body-md": [
-                            "16px",
-                            {
-                                    "lineHeight": "24px",
-                                    "fontWeight": "400"
-                            }
-                    ],
-                    "display-lg": [
-                            "48px",
-                            {
-                                    "lineHeight": "56px",
-                                    "letterSpacing": "-0.02em",
-                                    "fontWeight": "700"
-                            }
-                    ],
-                    "body-lg": [
-                            "18px",
-                            {
-                                    "lineHeight": "28px",
-                                    "fontWeight": "400"
-                            }
-                    ],
-                    "display-lg-mobile": [
-                            "32px",
-                            {
-                                    "lineHeight": "40px",
-                                    "fontWeight": "700"
-                            }
-                    ]
-            }
-          },
-        }
-      }
-    </script>
-<link rel="stylesheet" href="css/blog.css">
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writing — Mohammadreza Nobahari · Network &amp; Security Engineer</title>
+  <meta name="description" content="Notes on network security, Python automation, and teaching systems thinking by Mohammadreza Nobahari — Network &amp; Security Engineer · Python Automation · Educator.">
+  <meta name="author" content="Mohammadreza Nobahari">
+  <link rel="canonical" href="https://mmdrz-n.github.io/blog.html">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1424'/%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%2338bdf8' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-size='26' font-weight='700' text-anchor='middle' fill='%2338bdf8'%3EMN%3C/text%3E%3C/svg%3E">
+  <meta property="og:title" content="Writing — Mohammadreza Nobahari · Network &amp; Security Engineer · Python Automation · Educator">
+  <meta property="og:description" content="Notes on network security, Python automation, and teaching systems thinking.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mmdrz-n.github.io/blog.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Writing — Mohammadreza Nobahari · Network &amp; Security Engineer · Python Automation · Educator">
+  <meta name="twitter:description" content="Notes on network security, Python automation, and teaching systems thinking.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Mohammadreza Nobahari",
+    "jobTitle": "Network & Security Engineer",
+    "url": "https://mmdrz-n.github.io/",
+    "address": { "@type": "PostalAddress", "addressLocality": "Karaj", "addressCountry": "IR" },
+    "sameAs": [
+      "https://www.linkedin.com/in/mohammadreza-nobahari-54370526a",
+      "https://github.com/mmdrz-n"
+    ]
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/blog.css">
 </head>
-<body class="antialiased min-h-screen flex flex-col font-body-md text-body-md">
-<!-- TopAppBar -->
-<header class="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-surface-border shadow-[0_0_20px_rgba(157,123,255,0.1)]">
-<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop flex items-center justify-between h-20">
-<div class="flex items-center gap-base">
-<span class="material-symbols-outlined text-primary dark:text-primary">terminal</span>
-<span class="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-primary">Knowledge Lab</span>
-</div>
-<nav class="hidden md:flex gap-md">
-<a class="text-on-surface-variant hover:text-primary transition-colors font-label-mono text-label-mono" href="index.html">Home</a>
+<body>
+
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
+    <symbol id="i-linkedin" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav aria-label="Primary">
+  <a href="index.html" class="nav-logo" aria-label="Mohammadreza Nobahari, home"><span class="logo-mark" aria-hidden="true">MN</span><span class="logo-text">Mohammadreza Nobahari</span></a>
+  <div class="nav-actions">
+    <a class="nav-home" href="index.html">Home</a>
+    <a class="btn btn-primary btn-sm" href="index.html#contact">Contact</a>
+  </div>
 </nav>
-<button class="bg-primary-container text-on-primary-container font-label-mono text-label-mono px-md py-sm rounded glow-hover transition-all duration-300 active:scale-95">Contact</button>
-</div>
-</header>
-<!-- Main Content -->
-<main class="flex-grow pt-32 pb-xl px-margin-mobile md:px-margin-desktop max-w-7xl mx-auto w-full">
-<!-- Hero Section -->
-<section class="mb-xl text-center md:text-left">
-<h1 class="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-primary mb-sm">Knowledge Lab // Blog</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Insights into network security, automation, and system thinking. Understand deeply. Build securely. Teach clearly.</p>
-</section>
-<!-- Search and Filters -->
-<section class="mb-lg flex flex-col md:flex-row gap-md items-center justify-between">
-<div class="relative w-full md:w-1/3">
-<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline">search</span>
-<input id="blog-search" class="w-full bg-deep-charcoal border border-surface-border rounded-lg py-sm pl-10 pr-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Search insights..." type="text"/>
-</div>
-<div class="flex gap-sm overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
-<button class="whitespace-nowrap px-sm py-xs rounded-full border border-primary-container text-primary-container font-label-mono text-label-mono glow-hover bg-primary-container/10">All</button>
-<button class="whitespace-nowrap px-sm py-xs rounded-full border border-surface-border text-on-surface-variant font-label-mono text-label-mono hover:bg-surface-variant transition-colors">Network Security</button>
-<button class="whitespace-nowrap px-sm py-xs rounded-full border border-surface-border text-on-surface-variant font-label-mono text-label-mono hover:bg-surface-variant transition-colors">Python Automation</button>
-<button class="whitespace-nowrap px-sm py-xs rounded-full border border-surface-border text-on-surface-variant font-label-mono text-label-mono hover:bg-surface-variant transition-colors">Career Strategy</button>
-<button class="whitespace-nowrap px-sm py-xs rounded-full border border-surface-border text-on-surface-variant font-label-mono text-label-mono hover:bg-surface-variant transition-colors">Labs</button>
-</div>
-</section>
-<!-- Featured Post -->
-<section class="mb-xl" id="featured-post">
-<div class="glass-panel rounded-xl p-md md:p-lg flex flex-col md:flex-row gap-md hover:bg-surface-bright/50 transition-colors cursor-pointer group">
-<div class="w-full md:w-1/2 h-48 md:h-auto rounded-lg overflow-hidden bg-surface-variant relative">
-<div class="bg-cover bg-center w-full h-full opacity-80 group-hover:opacity-100 transition-opacity" data-alt="A futuristic server room glowing with neon purple and cyan lights, representing data packet flow in a dark mode aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD8U_Up3nEW9inwYEzR_YDIXBmzEjg259nlbZmg5iRkGrc8MGH1aqweRDR8cdK60Dev94CmD93hPWpcaaQYy1tD9yky42z3uJleoiywxWLGTa82K_C2poMKpIq9LlV04fRU2WNtyfQLoQxoHTaLEHFixtczqle7PBDIlncGhkMo9d2JwxtwgR6mTkfg2CL8Et7iJBw3V5nf54i6Z1wCT19OIcWuUcoxnVurtYyAio3eAmwLNcj55oBq')"></div>
-</div>
-<div class="w-full md:w-1/2 flex flex-col justify-center">
-<span class="font-label-mono text-label-mono text-secondary-container bg-secondary-container/10 px-sm py-xs rounded w-fit mb-sm">NETWORK SECURITY</span>
-<h2 class="font-headline-md text-headline-md text-primary mb-sm group-hover:text-amethyst-glow transition-colors">The Bridge: Why Every Developer Should Understand Packet Flow</h2>
-<p class="text-on-surface-variant mb-md">Developers who ignore networking build fragile apps. Network engineers who ignore code repeat manual work forever. I teach the bridge...</p>
-<div class="flex items-center gap-xs font-caption text-caption text-outline">
-<span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>
-<span>Oct 28, 2024 · 8 min read</span>
-</div>
-</div>
-</div>
-</section>
-<!-- Blog Feed Grid -->
-<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md" id="blog-grid">
-<!-- Card 1 -->
-<article class="glass-panel rounded-xl p-md flex flex-col hover:bg-surface-bright/50 transition-colors cursor-pointer group">
-<span class="font-label-mono text-label-mono text-secondary-container bg-secondary-container/10 px-sm py-xs rounded w-fit mb-sm">PYTHON AUTOMATION</span>
-<h3 class="font-headline-md text-headline-md text-primary mb-sm group-hover:text-amethyst-glow transition-colors text-xl">Automating FortiGate Policies with Python</h3>
-<p class="text-on-surface-variant mb-md flex-grow text-sm">A deep dive into building a REST API pipeline that bulk-generates and validates firewall policies, cutting manual time by 80%.</p>
-<div class="flex items-center gap-xs font-caption text-caption text-outline mt-auto pt-sm border-t border-surface-border">
-<span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
-<span>Oct 24, 2024 · 5 min read</span>
-</div>
-</article>
-<!-- Card 2 -->
-<article class="glass-panel rounded-xl p-md flex flex-col hover:bg-surface-bright/50 transition-colors cursor-pointer group">
-<span class="font-label-mono text-label-mono text-secondary-container bg-secondary-container/10 px-sm py-xs rounded w-fit mb-sm">CAREER STRATEGY</span>
-<h3 class="font-headline-md text-headline-md text-primary mb-sm group-hover:text-amethyst-glow transition-colors text-xl">Learn Like a Gamer, Work Like a Pro</h3>
-<p class="text-on-surface-variant mb-md flex-grow text-sm">How strategy games and pattern recognition shaped my approach to complex systems architecture and troubleshooting.</p>
-<div class="flex items-center gap-xs font-caption text-caption text-outline mt-auto pt-sm border-t border-surface-border">
-<span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
-<span>Oct 15, 2024 · 4 min read</span>
-</div>
-</article>
-<!-- Card 3 -->
-<article class="glass-panel rounded-xl p-md flex flex-col hover:bg-surface-bright/50 transition-colors cursor-pointer group">
-<span class="font-label-mono text-label-mono text-secondary-container bg-secondary-container/10 px-sm py-xs rounded w-fit mb-sm">LABS</span>
-<h3 class="font-headline-md text-headline-md text-primary mb-sm group-hover:text-amethyst-glow transition-colors text-xl">Building a Threat Intelligence Dashboard</h3>
-<p class="text-on-surface-variant mb-md flex-grow text-sm">Step-by-step guide to parsing FortiAnalyzer logs with Python to create actionable HTML reports for security teams.</p>
-<div class="flex items-center gap-xs font-caption text-caption text-outline mt-auto pt-sm border-t border-surface-border">
-<span class="material-symbols-outlined" style="font-size: 16px;">schedule</span>
-<span>Oct 02, 2024 · 12 min read</span>
-</div>
-</article>
-</section>
-<p id="no-results" class="hidden text-center text-on-surface-variant col-span-full py-lg">No posts match your search.</p>
+
+<main id="main" class="blog-main">
+  <header class="blog-hero">
+    <h1>Writing</h1>
+    <p>Notes on network security, automation, and systems thinking. Understand deeply. Build securely. Teach clearly.</p>
+  </header>
+
+  <div class="blog-tools">
+    <div class="blog-search">
+      <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="blog-search" type="search" placeholder="Search notes..." aria-label="Search notes" autocomplete="off">
+    </div>
+    <div class="chips" role="group" aria-label="Filter by category">
+      <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+      <button class="chip" type="button" data-filter="network-security" aria-pressed="false">Network security</button>
+      <button class="chip" type="button" data-filter="python-automation" aria-pressed="false">Python automation</button>
+      <button class="chip" type="button" data-filter="career-strategy" aria-pressed="false">Career strategy</button>
+      <button class="chip" type="button" data-filter="labs" aria-pressed="false">Labs</button>
+    </div>
+  </div>
+
+  <article class="post post-featured" id="featured-post" data-category="network-security">
+    <div class="post-flag">Featured</div>
+    <div class="post-cat">Network security</div>
+    <h2>The Bridge: Why Every Developer Should Understand Packet Flow</h2>
+    <p>Developers who ignore networking build fragile apps. Network engineers who ignore code repeat manual work forever. I teach the bridge...</p>
+    <div class="post-meta">Oct 28, 2024 · 8 min read</div>
+  </article>
+
+  <div class="blog-grid" id="blog-grid">
+    <article class="post" data-category="python-automation">
+      <div class="post-cat">Python automation</div>
+      <h3>Automating FortiGate Policies with Python</h3>
+      <p>A deep dive into building a REST API pipeline that bulk-generates and validates firewall policies, cutting manual time by 80%.</p>
+      <div class="post-meta">Oct 24, 2024 · 5 min read</div>
+    </article>
+    <article class="post" data-category="career-strategy">
+      <div class="post-cat">Career strategy</div>
+      <h3>Learn Like a Gamer, Work Like a Pro</h3>
+      <p>How strategy games and pattern recognition shaped my approach to complex systems architecture and troubleshooting.</p>
+      <div class="post-meta">Oct 15, 2024 · 4 min read</div>
+    </article>
+    <article class="post" data-category="labs">
+      <div class="post-cat">Labs</div>
+      <h3>Building a Threat Intelligence Dashboard</h3>
+      <p>Step-by-step guide to parsing FortiAnalyzer logs with Python to create actionable HTML reports for security teams.</p>
+      <div class="post-meta">Oct 02, 2024 · 12 min read</div>
+    </article>
+  </div>
+
+  <p id="no-results" class="no-results" role="status" hidden>No posts match your search.</p>
 </main>
-<!-- Footer -->
-<footer class="w-full mt-lg border-t border-surface-border bg-deep-charcoal dark:bg-deep-charcoal">
-<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-xl flex flex-col md:flex-row justify-between items-center gap-md">
-<div class="font-caption text-caption text-outline">
-                © 2024 Knowledge Lab // System Architect
-            </div>
-<div class="flex gap-md font-label-mono text-label-mono">
-<a class="text-outline hover:text-primary transition-colors" href="#">GitHub</a>
-<a class="text-outline hover:text-primary transition-colors" href="#">LinkedIn</a>
-<a class="text-outline hover:text-primary transition-colors" href="#">Documentation</a>
-<a class="text-outline hover:text-primary transition-colors" href="#">Privacy</a>
+
+<div class="footer-wrap">
+  <footer>
+    <p>© 2026 Mohammadreza Nobahari · Network &amp; Security Engineer · Python Automation · Educator</p>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/mohammadreza-nobahari-54370526a" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-linkedin"/></svg> LinkedIn</a>
+      <a href="https://github.com/mmdrz-n" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
+      <a href="mailto:mreza.nobahari@gmail.com"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg> Email</a>
+    </div>
+  </footer>
 </div>
-</div>
-</footer>
+
 <script src="js/blog.js"></script>
-</body></html>
+</body>
+</html>

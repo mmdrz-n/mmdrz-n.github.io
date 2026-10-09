@@ -1,173 +1,165 @@
-/* MR.NOBAHARI Portfolio — main.js */
-
-// ── Custom cursor (desktop only, respects reduced motion) ──
-(function initCursor() {
-  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const isTouch = matchMedia("(pointer: coarse)").matches;
-  if (prefersReduced || isTouch) return;
-
-  document.body.classList.add("custom-cursor");
-  const cursor = document.getElementById("cursor");
-  const cursorDot = document.getElementById("cursor-dot");
-  let mx = -100, my = -100, cx = -100, cy = -100;
-
-  document.addEventListener("mousemove", (e) => {
-    mx = e.clientX;
-    my = e.clientY;
-  });
-
-  document.querySelectorAll("a, button, .flashcard, .skill-item").forEach((el) => {
-    el.addEventListener("mouseenter", () => cursor.classList.add("hover"));
-    el.addEventListener("mouseleave", () => cursor.classList.remove("hover"));
-  });
-
-  (function animate() {
-    cx += (mx - cx) * 0.18;
-    cy += (my - cy) * 0.18;
-    cursor.style.transform = `translate(${cx - 11}px, ${cy - 11}px)`;
-    cursorDot.style.transform = `translate(${mx - 2}px, ${my - 2}px)`;
-    requestAnimationFrame(animate);
-  })();
-})();
+/* Mohammadreza Nobahari — portfolio main.js */
 
 // ── Mobile nav ──
 const navToggle = document.getElementById("nav-toggle");
 const mobileMenu = document.getElementById("mobile-menu");
 
-navToggle.addEventListener("click", () => {
-  const open = mobileMenu.classList.toggle("open");
-  mobileMenu.setAttribute("aria-hidden", !open);
-  navToggle.textContent = open ? "CLOSE" : "MENU";
-});
+if (navToggle && mobileMenu) {
+  const setMenu = (open) => {
+    mobileMenu.classList.toggle("open", open);
+    navToggle.setAttribute("aria-expanded", String(open));
+    navToggle.textContent = open ? "Close" : "Menu";
+  };
 
-mobileMenu.querySelectorAll("a").forEach((link) => {
-  link.addEventListener("click", () => {
-    mobileMenu.classList.remove("open");
-    mobileMenu.setAttribute("aria-hidden", "true");
-    navToggle.textContent = "MENU";
+  navToggle.addEventListener("click", () => {
+    setMenu(!mobileMenu.classList.contains("open"));
   });
-});
+
+  mobileMenu.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => setMenu(false));
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mobileMenu.classList.contains("open")) {
+      setMenu(false);
+      navToggle.focus();
+    }
+  });
+}
 
 // ── Scroll reveal ──
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((e) => {
-      if (e.isIntersecting) e.target.classList.add("visible");
-    });
-  },
-  { threshold: 0.1 }
-);
-document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+const revealItems = document.querySelectorAll(".reveal");
+if ("IntersectionObserver" in window && revealItems.length) {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+          observer.unobserve(e.target);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+  revealItems.forEach((el) => observer.observe(el));
+} else {
+  revealItems.forEach((el) => el.classList.add("visible"));
+}
 
 // ── Nav active state ──
 const sections = document.querySelectorAll("section[id]");
 const navLinks = document.querySelectorAll(".nav-links a, .mobile-menu a");
 
-window.addEventListener(
-  "scroll",
-  () => {
-    let current = "";
-    sections.forEach((s) => {
-      if (window.scrollY >= s.offsetTop - 120) current = s.id;
-    });
-    navLinks.forEach((a) => {
-      a.classList.toggle("active", a.getAttribute("href") === `#${current}`);
-    });
-  },
-  { passive: true }
-);
+if (sections.length && navLinks.length) {
+  window.addEventListener(
+    "scroll",
+    () => {
+      let current = "";
+      sections.forEach((s) => {
+        if (window.scrollY >= s.offsetTop - 120) current = s.id;
+      });
+      navLinks.forEach((a) => {
+        a.classList.toggle("active", a.getAttribute("href") === `#${current}`);
+      });
+    },
+    { passive: true }
+  );
+}
 
-// ── Skills data & rendering ──
+// ── Skills ──
 const skillsData = {
   net: [
-    { name: "Switching (L2/L3)", pct: 85, level: "Expert", years: 2.5, desc: "VLAN, STP, trunk configuration" },
-    { name: "Routing (OSPF/BGP)", pct: 80, level: "Advanced", years: 2, desc: "Dynamic routing protocol design" },
-    { name: "VLANs / 802.1Q", pct: 88, level: "Expert", years: 2.5, desc: "Segmentation & trunking" },
-    { name: "Wi-Fi Design", pct: 72, level: "Intermediate", years: 1.5, desc: "802.11 standards & deployment" },
-    { name: "Wireshark / tcpdump", pct: 82, level: "Advanced", years: 2.2, desc: "Packet analysis & troubleshooting" },
-    { name: "Load Balancing", pct: 70, level: "Intermediate", years: 1.2, desc: "HA & traffic distribution" },
-    { name: "VPN / IPsec", pct: 78, level: "Advanced", years: 1.8, desc: "Site-to-site & remote access" },
-    { name: "SNMP / Syslog", pct: 75, level: "Intermediate", years: 1.5, desc: "Monitoring & centralized logging" },
+    { name: "Switching (L2/L3)", years: 2.5, desc: "VLAN, STP, trunk configuration" },
+    { name: "Routing (OSPF/BGP)", years: 2, desc: "Dynamic routing protocol design" },
+    { name: "VLANs / 802.1Q", years: 2.5, desc: "Segmentation & trunking" },
+    { name: "Wi-Fi Design", years: 1.5, desc: "802.11 standards & deployment" },
+    { name: "Wireshark / tcpdump", years: 2.2, desc: "Packet analysis & troubleshooting" },
+    { name: "Load Balancing", years: 1.2, desc: "HA & traffic distribution" },
+    { name: "VPN / IPsec", years: 1.8, desc: "Site-to-site & remote access" },
+    { name: "SNMP / Syslog", years: 1.5, desc: "Monitoring & centralized logging" },
   ],
   sec: [
-    { name: "FortiGate Firewall", pct: 90, level: "Expert", years: 2.8, desc: "UTM, policies, HA configuration" },
-    { name: "FortiWeb WAF", pct: 85, level: "Expert", years: 2.5, desc: "Web application protection" },
-    { name: "FortiAnalyzer", pct: 82, level: "Advanced", years: 2.2, desc: "Log analysis & reporting" },
-    { name: "Sophos XG", pct: 80, level: "Advanced", years: 2, desc: "IPS, web filtering, endpoint" },
-    { name: "IPS / IDS Tuning", pct: 78, level: "Advanced", years: 2, desc: "Threat detection & tuning" },
-    { name: "Firewall Policies", pct: 88, level: "Expert", years: 2.7, desc: "ACL, NAT, application filtering" },
-    { name: "Zero Trust", pct: 70, level: "Intermediate", years: 1, desc: "Concept & implementation" },
-    { name: "DMZ Architecture", pct: 76, level: "Advanced", years: 1.8, desc: "Network segmentation design" },
+    { name: "FortiGate Firewall", years: 2.8, desc: "UTM, policies, HA configuration" },
+    { name: "FortiWeb WAF", years: 2.5, desc: "Web application protection" },
+    { name: "FortiAnalyzer", years: 2.2, desc: "Log analysis & reporting" },
+    { name: "Sophos XG", years: 2, desc: "IPS, web filtering, endpoint" },
+    { name: "IPS / IDS Tuning", years: 2, desc: "Threat detection & tuning" },
+    { name: "Firewall Policies", years: 2.7, desc: "ACL, NAT, application filtering" },
+    { name: "Zero Trust", years: 1, desc: "Concept & implementation" },
+    { name: "DMZ Architecture", years: 1.8, desc: "Network segmentation design" },
   ],
   dev: [
-    { name: "Python", pct: 78, level: "Advanced", years: 2, desc: "Automation, scripts, API integration" },
-    { name: "C++", pct: 72, level: "Intermediate", years: 1.5, desc: "Network tools, performance" },
-    { name: "HTML / CSS", pct: 80, level: "Advanced", years: 2.2, desc: "Dashboards & web interfaces" },
-    { name: "JavaScript", pct: 74, level: "Advanced", years: 1.8, desc: "Interactive tools & automation" },
-    { name: "REST API", pct: 74, level: "Advanced", years: 2, desc: "API design & FortiGate integration" },
-    { name: "Linux CLI", pct: 85, level: "Expert", years: 2.5, desc: "Administration & troubleshooting" },
-    { name: "Shell Scripting", pct: 75, level: "Intermediate", years: 1.8, desc: "Bash automation workflows" },
-    { name: "Git", pct: 68, level: "Intermediate", years: 1.5, desc: "Version control & collaboration" },
+    { name: "Python", years: 2, desc: "Automation, scripts, API integration" },
+    { name: "C++", years: 1.5, desc: "Network tools, performance" },
+    { name: "HTML / CSS", years: 2.2, desc: "Dashboards & web interfaces" },
+    { name: "JavaScript", years: 1.8, desc: "Interactive tools & automation" },
+    { name: "REST API", years: 2, desc: "API design & FortiGate integration" },
+    { name: "Linux CLI", years: 2.5, desc: "Administration & troubleshooting" },
+    { name: "Shell Scripting", years: 1.8, desc: "Bash automation workflows" },
+    { name: "Git", years: 1.5, desc: "Version control & collaboration" },
   ],
 };
 
 function renderSkills(tab) {
   const panel = document.getElementById(`tab-${tab}`);
-  const r = 45;
-  const circ = 2 * Math.PI * r;
+  if (!panel || !skillsData[tab]) return;
 
   panel.innerHTML = skillsData[tab]
     .map(
       (s) => `
-    <div class="skill-item reveal" data-name="${s.name.toLowerCase()}">
-      <div class="skill-top">
-        <div class="skill-circle">
-          <svg viewBox="0 0 100 100" aria-hidden="true">
-            <circle class="skill-circle-bg" cx="50" cy="50" r="${r}"/>
-            <circle class="skill-circle-progress" cx="50" cy="50" r="${r}"
-              style="stroke-dasharray:${circ};stroke-dashoffset:${circ * (100 - s.pct) / 100}"/>
-          </svg>
-          <div class="skill-circle-text">${s.pct}%</div>
-        </div>
-        <div>
-          <div class="skill-name">${s.name}</div>
-          <div class="skill-level ${s.level.toLowerCase()}">${s.level}</div>
-          <div class="skill-experience">${s.years} yrs</div>
-        </div>
+    <div class="skill-item" data-name="${s.name.toLowerCase()}">
+      <div>
+        <span class="skill-name">${s.name}</span>
+        <span class="skill-desc">${s.desc}</span>
       </div>
-      <div class="skill-desc">${s.desc}</div>
+      <span class="skill-years">${s.years} yrs</span>
     </div>`
     )
     .join("");
-
-  panel.querySelectorAll(".skill-item").forEach((el) => observer.observe(el));
 }
 
 ["net", "sec", "dev"].forEach(renderSkills);
 
-// Tab switching
-document.querySelectorAll(".tab-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn").forEach((b) => {
-      b.classList.remove("active");
-      b.setAttribute("aria-selected", "false");
-    });
-    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
-    btn.classList.add("active");
-    btn.setAttribute("aria-selected", "true");
-    document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
-    document.querySelector(".skill-search").value = "";
-    document.querySelectorAll(".skill-item").forEach((i) => (i.style.display = ""));
+const skillSearch = document.querySelector(".skill-search");
+const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+const tabPanels = document.querySelectorAll(".tab-panel");
+
+function activateTab(btn) {
+  tabButtons.forEach((b) => {
+    const on = b === btn;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", String(on));
+    b.tabIndex = on ? 0 : -1;
+  });
+  tabPanels.forEach((p) => p.classList.remove("active"));
+  const panel = document.getElementById(`tab-${btn.dataset.tab}`);
+  if (panel) panel.classList.add("active");
+  if (skillSearch) skillSearch.value = "";
+  document.querySelectorAll(".skill-item").forEach((i) => (i.hidden = false));
+}
+
+tabButtons.forEach((btn, idx) => {
+  btn.addEventListener("click", () => activateTab(btn));
+  btn.addEventListener("keydown", (e) => {
+    let next = null;
+    if (e.key === "ArrowRight") next = tabButtons[(idx + 1) % tabButtons.length];
+    if (e.key === "ArrowLeft") next = tabButtons[(idx - 1 + tabButtons.length) % tabButtons.length];
+    if (next) {
+      e.preventDefault();
+      activateTab(next);
+      next.focus();
+    }
   });
 });
 
-// Skill filter
-document.querySelector(".skill-search").addEventListener("input", (e) => {
-  const q = e.target.value.toLowerCase();
-  document.querySelectorAll(".skill-item").forEach((item) => {
-    item.style.display = item.dataset.name.includes(q) ? "" : "none";
+if (skillSearch) {
+  skillSearch.addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll(".tab-panel.active .skill-item").forEach((item) => {
+      item.hidden = !item.dataset.name.includes(q);
+    });
   });
-});
+}
 
 // ── Flashcards ──
 const flashcards = [
@@ -197,54 +189,63 @@ const flashcards = [
   },
 ];
 
-let fcIndex = 0;
-let fcFlipped = false;
-
 const fcCard = document.getElementById("flashcard");
-const fcLabel = document.getElementById("fc-label");
-const fcQuestion = document.getElementById("fc-question");
-const fcAnswer = document.getElementById("fc-answer");
+if (fcCard) {
+  let fcIndex = 0;
+  let fcFlipped = false;
 
-function showFlashcard() {
-  fcFlipped = false;
-  fcCard.classList.remove("flipped");
-  fcLabel.textContent = `QUESTION ${fcIndex + 1} / ${flashcards.length}`;
-  fcQuestion.textContent = flashcards[fcIndex].q;
-  fcAnswer.textContent = flashcards[fcIndex].a;
-}
+  const fcLabel = document.getElementById("fc-label");
+  const fcQuestion = document.getElementById("fc-question");
+  const fcAnswer = document.getElementById("fc-answer");
 
-function flipCard() {
-  fcFlipped = !fcFlipped;
-  fcCard.classList.toggle("flipped", fcFlipped);
-  fcLabel.textContent = fcFlipped
-    ? `ANSWER ${fcIndex + 1} / ${flashcards.length}`
-    : `QUESTION ${fcIndex + 1} / ${flashcards.length}`;
-}
+  const labelText = () =>
+    `${fcFlipped ? "Answer" : "Question"} ${fcIndex + 1} of ${flashcards.length}`;
 
-fcCard.addEventListener("click", flipCard);
-fcCard.addEventListener("keydown", (e) => {
-  if (e.key === " " || e.key === "Enter") {
-    e.preventDefault();
-    flipCard();
+  function showFlashcard() {
+    fcFlipped = false;
+    fcCard.classList.remove("flipped");
+    fcLabel.textContent = labelText();
+    fcQuestion.textContent = flashcards[fcIndex].q;
+    fcAnswer.textContent = flashcards[fcIndex].a;
   }
-});
 
-document.getElementById("fc-prev").addEventListener("click", () => {
-  fcIndex = (fcIndex - 1 + flashcards.length) % flashcards.length;
+  function flipCard() {
+    fcFlipped = !fcFlipped;
+    fcCard.classList.toggle("flipped", fcFlipped);
+    fcLabel.textContent = labelText();
+  }
+
+  fcCard.addEventListener("click", flipCard);
+  fcCard.addEventListener("keydown", (e) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      flipCard();
+    }
+  });
+
+  document.getElementById("fc-prev")?.addEventListener("click", () => {
+    fcIndex = (fcIndex - 1 + flashcards.length) % flashcards.length;
+    showFlashcard();
+  });
+
+  document.getElementById("fc-next")?.addEventListener("click", () => {
+    fcIndex = (fcIndex + 1) % flashcards.length;
+    showFlashcard();
+  });
+
+  document.getElementById("fc-shuffle")?.addEventListener("click", () => {
+    if (flashcards.length > 1) {
+      let next;
+      do {
+        next = Math.floor(Math.random() * flashcards.length);
+      } while (next === fcIndex);
+      fcIndex = next;
+    }
+    showFlashcard();
+  });
+
   showFlashcard();
-});
-
-document.getElementById("fc-next").addEventListener("click", () => {
-  fcIndex = (fcIndex + 1) % flashcards.length;
-  showFlashcard();
-});
-
-document.getElementById("fc-shuffle").addEventListener("click", () => {
-  fcIndex = Math.floor(Math.random() * flashcards.length);
-  showFlashcard();
-});
-
-showFlashcard();
+}
 
 // ── Subnet calculator ──
 function ipToInt(ip) {
@@ -272,80 +273,86 @@ function calculateSubnet(cidr) {
   const broadcast = (network | (~mask >>> 0)) >>> 0;
   const hosts = prefix >= 31 ? (prefix === 32 ? 1 : 2) : Math.pow(2, 32 - prefix) - 2;
 
+  // /31 (RFC 3021) both addresses are usable; /32 is a single host.
+  let firstHost, lastHost;
+  if (prefix === 32) {
+    firstHost = lastHost = intToIp(network);
+  } else if (prefix === 31) {
+    firstHost = intToIp(network);
+    lastHost = intToIp(broadcast);
+  } else {
+    firstHost = intToIp(network + 1);
+    lastHost = intToIp(broadcast - 1);
+  }
+
   return {
     network: intToIp(network),
     broadcast: intToIp(broadcast),
     mask: intToIp(mask),
     wildcard: intToIp(~mask >>> 0),
-    firstHost: prefix >= 31 ? "N/A" : intToIp(network + 1),
-    lastHost: prefix >= 31 ? "N/A" : intToIp(broadcast - 1),
+    firstHost,
+    lastHost,
     totalHosts: hosts,
     prefix,
   };
 }
 
-document.getElementById("calc-subnet").addEventListener("click", () => {
-  const input = document.getElementById("cidr-input").value;
-  const result = calculateSubnet(input);
-  const out = document.getElementById("subnet-result");
+const subnetBtn = document.getElementById("calc-subnet");
+const cidrInput = document.getElementById("cidr-input");
+const subnetOut = document.getElementById("subnet-result");
+if (subnetBtn && cidrInput && subnetOut) {
+  subnetBtn.addEventListener("click", () => {
+    const result = calculateSubnet(cidrInput.value);
 
-  if (result.error) {
-    out.innerHTML = `<span style="color:var(--red)">✗ ${result.error}</span>`;
-    return;
-  }
+    if (result.error) {
+      subnetOut.innerHTML = `<div class="err">${result.error}</div>`;
+      return;
+    }
 
-  out.innerHTML = `
-<span class="ok">✓ Subnet calculated successfully</span>
-<span class="key">Network:    </span><span class="val">${result.network}/${result.prefix}</span>
-<span class="key">Subnet Mask:</span><span class="val">${result.mask}</span>
-<span class="key">Wildcard:   </span><span class="val">${result.wildcard}</span>
-<span class="key">Broadcast:  </span><span class="val">${result.broadcast}</span>
-<span class="key">First Host: </span><span class="val">${result.firstHost}</span>
-<span class="key">Last Host:  </span><span class="val">${result.lastHost}</span>
-<span class="key">Usable Hosts:</span><span class="val">${result.totalHosts}</span>`;
-});
+    subnetOut.innerHTML = `
+<div class="ok">✓ Subnet calculated</div>
+<dl class="subnet-grid">
+  <dt>Network</dt><dd>${result.network}/${result.prefix}</dd>
+  <dt>Subnet mask</dt><dd>${result.mask}</dd>
+  <dt>Wildcard</dt><dd>${result.wildcard}</dd>
+  <dt>Broadcast</dt><dd>${result.broadcast}</dd>
+  <dt>First host</dt><dd>${result.firstHost}</dd>
+  <dt>Last host</dt><dd>${result.lastHost}</dd>
+  <dt>Usable hosts</dt><dd>${result.totalHosts.toLocaleString("en-US")}</dd>
+</dl>`;
+  });
 
-document.getElementById("cidr-input").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") document.getElementById("calc-subnet").click();
-});
+  cidrInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") subnetBtn.click();
+  });
+}
 
-// ── AI fact button ──
-const notif = document.getElementById("notif");
-const aiFacts = [
-  "🤖 The term 'Artificial Intelligence' was coined in 1956 at Dartmouth College.",
-  "🤖 A neural network's 'neurons' are just weighted math functions, not real brain cells.",
-  "🤖 GPT stands for Generative Pre-trained Transformer.",
-  "🤖 The Transformer architecture powering modern AI was introduced in a 2017 paper called 'Attention Is All You Need'.",
-  "🤖 AI can now generate working firewall configs — but it still can't make coffee.",
-  "🤖 The first chatbot, ELIZA, was built in 1966 and just rephrased your sentences as questions.",
-  "🤖 Deep Blue beat chess champion Garry Kasparov in 1997.",
-  "🤖 Training a large language model can use more electricity than some small towns.",
-  "🤖 AI models don't 'think' — they predict the most statistically likely next token.",
-  "🤖 The word 'robot' comes from the Czech word 'robota', meaning forced labor.",
-  "🤖 Some AI models can now write, debug, and explain firewall policies faster than a junior engineer.",
-  "🤖 Reinforcement learning is how AI learned to beat humans at Go, a game with more positions than atoms in the universe.",
-  "🤖 AI hallucinations aren't bugs exactly — they're confident guesses dressed up as facts.",
-  "🤖 The first AI 'winter' happened in the 1970s when funding and hype both collapsed.",
-  "🤖 Fun fact: even Claude doesn't know exactly why it says what it says — just like your brain and its neurons.",
-];
+// ── Copy email (inline "Copied" feedback) ──
+const emailLink = document.getElementById("email-link");
+if (emailLink) {
+  const label = emailLink.querySelector(".copy-label");
+  const original = label ? label.textContent : "";
+  const address = "mreza.nobahari@gmail.com";
+  let resetTimer = null;
 
-const aiFactBtn = document.getElementById("ai-fact-btn");
-aiFactBtn.addEventListener("click", () => {
-  const fact = aiFacts[Math.floor(Math.random() * aiFacts.length)];
-  notif.textContent = fact;
-  notif.classList.add("ai-mode");
-  notif.classList.remove("show");
-  void notif.offsetWidth; // restart animation
-  notif.classList.add("show");
-  clearTimeout(window.__notifTimer);
-  window.__notifTimer = setTimeout(() => {
-    notif.classList.remove("show");
-  }, 4500);
-});
-
-// ── Copy email (silent, no notification) ──
-document.getElementById("email-link").addEventListener("click", (e) => {
-  if (e.ctrlKey || e.metaKey) return;
-  e.preventDefault();
-  navigator.clipboard.writeText("mreza.nobahari@gmail.com").catch(() => {});
-});
+  emailLink.addEventListener("click", (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (!navigator.clipboard) return;
+    e.preventDefault();
+    navigator.clipboard
+      .writeText(address)
+      .then(() => {
+        if (!label) return;
+        label.textContent = "Copied ✓";
+        emailLink.classList.add("copied");
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          label.textContent = original;
+          emailLink.classList.remove("copied");
+        }, 1500);
+      })
+      .catch(() => {
+        window.location.href = emailLink.href;
+      });
+  });
+}

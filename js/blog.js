@@ -1,28 +1,34 @@
 (function () {
   const searchInput = document.getElementById("blog-search");
-  const grid = document.getElementById("blog-grid");
-  const cards = Array.from(grid.querySelectorAll("article"));
-  const featured = document.getElementById("featured-post");
   const noResults = document.getElementById("no-results");
+  const posts = Array.from(document.querySelectorAll(".post[data-category]"));
+  const chips = Array.from(document.querySelectorAll(".chip[data-filter]"));
+  if (!posts.length) return;
 
-  function textOf(el) {
-    return el.textContent.trim().toLowerCase();
-  }
+  let category = "all";
 
-  searchInput.addEventListener("input", (e) => {
-    const q = e.target.value.trim().toLowerCase();
+  function apply() {
+    const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
     let visibleCount = 0;
 
-    cards.forEach((card) => {
-      const match = textOf(card).includes(q);
-      card.style.display = match ? "" : "none";
-      if (match) visibleCount++;
+    posts.forEach((post) => {
+      const catMatch = category === "all" || post.dataset.category === category;
+      const textMatch = !q || post.textContent.toLowerCase().includes(q);
+      const show = catMatch && textMatch;
+      post.hidden = !show;
+      if (show) visibleCount++;
     });
 
-    if (featured) {
-      featured.style.display = textOf(featured).includes(q) ? "" : "none";
-    }
+    if (noResults) noResults.hidden = visibleCount > 0;
+  }
 
-    noResults.classList.toggle("hidden", visibleCount > 0 || q === "");
+  if (searchInput) searchInput.addEventListener("input", apply);
+
+  chips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      category = chip.dataset.filter;
+      chips.forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
+      apply();
+    });
   });
 })();
