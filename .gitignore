@@ -1,1 +1,4 @@
 .omc/
+.claude/
+.github/prompts/
+__pycache__/

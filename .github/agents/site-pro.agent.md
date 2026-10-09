@@ -22,3 +22,9 @@ You are the dedicated engineer for the MR::NOBAHARI portfolio website.
 - Surface errors instead of hiding them behind empty catches or silent fallbacks.
 - After JavaScript changes, run `node --check` on the affected script and `git diff --check`. For visual changes, inspect the relevant page at desktop and mobile sizes when browser tools are available.
 - Explain what changed, what was verified, and any remaining limitation in the user's language.
+
+## UI/UX Pro Max skill
+
+- For any visual, layout, typography, color, interaction, or accessibility work, first read `.github/prompts/ui-ux-pro-max/SKILL.md` and follow its rules and pre-delivery checklist.
+- Python is not on PATH; run the skill's scripts with the project venv: `.venv/Scripts/python.exe .github/prompts/ui-ux-pro-max/scripts/search.py "<query>" --domain <domain>` (or `--design-system -p "MR::NOBAHARI"`).
+- Treat its recommendations as input, not orders: keep the existing dark cyan/green/gold identity unless the user asks for a redesign.
