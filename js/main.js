@@ -25,6 +25,8 @@ const STRINGS = {
     usableHosts: "Usable hosts",
     numberLocale: "en-US",
     copied: "Copied ✓",
+    pause: "Pause",
+    play: "Play",
   },
   de: {
     menu: "Menü",
@@ -46,6 +48,8 @@ const STRINGS = {
     usableHosts: "Nutzbare Hosts",
     numberLocale: "de-DE",
     copied: "Kopiert ✓",
+    pause: "Pause",
+    play: "Abspielen",
   },
 };
 const t = STRINGS[LANG];
@@ -77,8 +81,15 @@ if (navToggle && mobileMenu) {
   });
 }
 
-// ── Scroll reveal ──
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ── Scroll reveal (siblings stagger in) ──
 const revealItems = document.querySelectorAll(".reveal");
+revealItems.forEach((el) => {
+  const siblings = Array.from(el.parentElement.children).filter((c) => c.classList.contains("reveal"));
+  const idx = siblings.indexOf(el);
+  if (idx > 0) el.style.setProperty("--d", `${Math.min(idx, 6) * 80}ms`);
+});
 if ("IntersectionObserver" in window && revealItems.length) {
   const observer = new IntersectionObserver(
     (entries) => {
@@ -86,6 +97,11 @@ if ("IntersectionObserver" in window && revealItems.length) {
         if (e.isIntersecting) {
           e.target.classList.add("visible");
           observer.unobserve(e.target);
+          // drop the stagger delay so later hover transitions respond immediately
+          setTimeout(() => {
+            e.target.style.removeProperty("--d");
+            e.target.classList.add("settled");
+          }, 1300);
         }
       });
     },
@@ -156,15 +172,18 @@ function renderSkills(tab) {
   if (!panel || !skillsData[tab]) return;
 
   panel.innerHTML = skillsData[tab]
-    .map((s) => {
+    .map((s, i) => {
       const name = tr(s.name);
       return `
-    <div class="skill-item" data-name="${name.toLowerCase()}">
-      <div>
-        <span class="skill-name">${name}</span>
-        <span class="skill-desc">${tr(s.desc)}</span>
+    <div class="skill-item spot" data-name="${name.toLowerCase()}" style="--i:${i * 40}ms">
+      <div class="skill-row">
+        <div>
+          <span class="skill-name">${name}</span>
+          <span class="skill-desc">${tr(s.desc)}</span>
+        </div>
+        <span class="skill-years">${t.years(s.years)}</span>
       </div>
-      <span class="skill-years">${t.years(s.years)}</span>
+      <div class="skill-bar" aria-hidden="true"><span style="--w:${Math.min(100, Math.round((s.years / 3) * 100))}%"></span></div>
     </div>`;
     })
     .join("");
@@ -434,5 +453,214 @@ if (emailLink) {
       .catch(() => {
         window.location.href = emailLink.href;
       });
+  });
+}
+
+// ── Nav state + scroll progress ──
+const navEl = document.querySelector("nav");
+const progressEl = document.querySelector(".scroll-progress");
+let scrollTicking = false;
+
+function updateScrollUi() {
+  scrollTicking = false;
+  const y = window.scrollY;
+  if (navEl) navEl.classList.toggle("scrolled", y > 24);
+  if (progressEl) {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressEl.style.setProperty("--progress", max > 0 ? (y / max).toFixed(4) : "0");
+  }
+}
+
+window.addEventListener(
+  "scroll",
+  () => {
+    if (!scrollTicking) {
+      scrollTicking = true;
+      requestAnimationFrame(updateScrollUi);
+    }
+  },
+  { passive: true }
+);
+updateScrollUi();
+
+// ── Cursor spotlight on cards ──
+const SPOT_SELECTOR =
+  ".path-card, .stat-card, .teach-card, .digital-card, .project-card, .skill-item, .lab-panel, .forti-box, .cred-card, .mini-stat";
+document.querySelectorAll(SPOT_SELECTOR).forEach((el) => el.classList.add("spot"));
+
+if (window.matchMedia("(hover: hover)").matches) {
+  document.addEventListener(
+    "pointermove",
+    (e) => {
+      const card = e.target.closest?.(".spot");
+      if (!card) return;
+      const r = card.getBoundingClientRect();
+      card.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      card.style.setProperty("--my", `${e.clientY - r.top}px`);
+    },
+    { passive: true }
+  );
+}
+
+// ── Count-up stats ("2+", "4+", "3") ──
+const countEls = Array.from(document.querySelectorAll(".stat-num, .mini-stat-num")).filter((el) =>
+  /^\d+\+?$/.test(el.textContent.trim())
+);
+
+function countUp(el) {
+  const text = el.textContent.trim();
+  const target = parseInt(text, 10);
+  const suffix = text.endsWith("+") ? "+" : "";
+  const duration = 1200;
+  const start = performance.now();
+  const step = (now) => {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = `${Math.round(target * eased)}${suffix}`;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+if (!reduceMotion && "IntersectionObserver" in window && countEls.length) {
+  const countObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          countObserver.unobserve(e.target);
+          countUp(e.target);
+        }
+      });
+    },
+    { threshold: 0.6 }
+  );
+  countEls.forEach((el) => countObserver.observe(el));
+}
+
+// ── Hero network canvas ──
+const netCanvas = document.getElementById("net-canvas");
+if (netCanvas && netCanvas.getContext) {
+  const ctx = netCanvas.getContext("2d");
+  const pointer = { x: -9999, y: -9999 };
+  const COLORS = ["56,189,248", "129,140,248", "52,211,153"];
+  const LINK = 140;
+  let nodes = [];
+  let width = 0;
+  let height = 0;
+  let running = false;
+  let inView = true;
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    width = netCanvas.clientWidth;
+    height = netCanvas.clientHeight;
+    netCanvas.width = Math.round(width * dpr);
+    netCanvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.min(80, Math.round((width * height) / 16000));
+    nodes = Array.from({ length: count }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      r: Math.random() * 1.6 + 0.8,
+      c: COLORS[Math.floor(Math.random() * COLORS.length)],
+    }));
+    if (!running) draw();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d < LINK) {
+          ctx.strokeStyle = `rgba(${a.c},${(1 - d / LINK) * 0.28})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+      const pd = Math.hypot(a.x - pointer.x, a.y - pointer.y);
+      if (pd < LINK * 1.4) {
+        ctx.strokeStyle = `rgba(56,189,248,${(1 - pd / (LINK * 1.4)) * 0.6})`;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(pointer.x, pointer.y);
+        ctx.stroke();
+      }
+      ctx.fillStyle = `rgba(${a.c},0.9)`;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function tick() {
+    if (!running) return;
+    for (const n of nodes) {
+      n.x += n.vx;
+      n.y += n.vy;
+      if (n.x < 0 || n.x > width) n.vx *= -1;
+      if (n.y < 0 || n.y > height) n.vy *= -1;
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function setRunning(on) {
+    const next = on && !reduceMotion && inView && !document.hidden;
+    if (next && !running) {
+      running = true;
+      requestAnimationFrame(tick);
+    } else if (!next) {
+      running = false;
+    }
+  }
+
+  const hero = netCanvas.parentElement;
+  hero.addEventListener("pointermove", (e) => {
+    const r = netCanvas.getBoundingClientRect();
+    pointer.x = e.clientX - r.left;
+    pointer.y = e.clientY - r.top;
+    if (!running) draw();
+  });
+  hero.addEventListener("pointerleave", () => {
+    pointer.x = pointer.y = -9999;
+    if (!running) draw();
+  });
+
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      setRunning(true);
+    }).observe(hero);
+  }
+  document.addEventListener("visibilitychange", () => setRunning(true));
+
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 150);
+  });
+
+  resize();
+  setRunning(true);
+}
+
+// ── Marquee pause/play (WCAG 2.2.2) ──
+const marquee = document.querySelector(".tech-marquee");
+const marqueeToggle = marquee?.querySelector(".marquee-toggle");
+if (marquee && marqueeToggle) {
+  marqueeToggle.addEventListener("click", () => {
+    const paused = marquee.classList.toggle("paused");
+    marqueeToggle.setAttribute("aria-pressed", String(paused));
+    marqueeToggle.textContent = paused ? t.play : t.pause;
   });
 }
