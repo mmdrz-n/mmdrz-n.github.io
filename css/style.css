@@ -479,14 +479,17 @@ nav.scrolled { background: rgba(4, 7, 15, 0.82); border-bottom-color: var(--bord
   animation: fadeUp 0.8s var(--ease-out) both;
 }
 
+/* size the name from its column, not the viewport: "Mohammadreza" is ~7.2em wide,
+   so 13cqi keeps it on one line in the two-column layout instead of splitting it */
+.hero-left { container-type: inline-size; }
 .hero-name {
   font-family: var(--font-display);
-  font-size: clamp(2.4rem, 7.2vw, 5.6rem);
+  font-size: clamp(2rem, 13cqi, 5.6rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.035em;
   color: var(--text);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   animation: fadeUp 0.8s 0.06s var(--ease-out) both;
 }
 
