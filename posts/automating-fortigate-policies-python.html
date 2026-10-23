@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automating FortiGate Policies with Python · Mohammadreza Nobahari</title>
+  <meta name="description" content="Clicking through the GUI for one rule is fine. For fifty rules across three sites it&#x27;s how mistakes happen. Here&#x27;s how to treat firewall policies as data: describe them in a file, validate them with Python and push them through the FortiOS REST API, safely.">
+  <meta name="author" content="Mohammadreza Nobahari">
+  <link rel="canonical" href="https://mmdrz-n.github.io/posts/automating-fortigate-policies-python.html">
+  <link rel="alternate" type="application/rss+xml" title="Mohammadreza Nobahari · Writing" href="../feed.xml">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1424'/%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%2338bdf8' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-size='26' font-weight='700' text-anchor='middle' fill='%2338bdf8'%3EMN%3C/text%3E%3C/svg%3E">
+  <meta property="og:title" content="Automating FortiGate Policies with Python">
+  <meta property="og:description" content="Clicking through the GUI for one rule is fine. For fifty rules across three sites it&#x27;s how mistakes happen. Here&#x27;s how to treat firewall policies as data: describe them in a file, validate them with Python and push them through the FortiOS REST API, safely.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://mmdrz-n.github.io/posts/automating-fortigate-policies-python.html">
+  <meta property="article:published_time" content="2026-09-24">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Automating FortiGate Policies with Python", "description": "Clicking through the GUI for one rule is fine. For fifty rules across three sites it's how mistakes happen. Here's how to treat firewall policies as data: describe them in a file, validate them with Python and push them through the FortiOS REST API, safely.", "datePublished": "2026-09-24", "author": {"@type": "Person", "name": "Mohammadreza Nobahari", "url": "https://mmdrz-n.github.io/"}, "mainEntityOfPage": "https://mmdrz-n.github.io/posts/automating-fortigate-policies-python.html"}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/blog.css">
+  <link rel="stylesheet" href="../css/post.css">
+</head>
+<body>
+
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav aria-label="Primary">
+  <a href="../index.html" class="nav-logo" aria-label="Mohammadreza Nobahari, home"><span class="logo-mark" aria-hidden="true">MN</span><span class="logo-text">Mohammadreza Nobahari</span></a>
+  <div class="nav-actions">
+    <a class="nav-home" href="../index.html">Home</a>
+    <a class="nav-home" href="../blog.html">Writing</a>
+    <a class="btn btn-primary btn-sm" href="../index.html#contact">Contact</a>
+  </div>
+</nav>
+
+<main id="main" class="post-main">
+  <article>
+    <div class="crumbs"><a href="../blog.html">Writing</a> / Python automation</div>
+    <header class="article-head">
+      <div class="post-cat">Python automation</div>
+      <h1>Automating FortiGate Policies with Python</h1>
+      <p class="article-lede">Clicking through the GUI for one rule is fine. For fifty rules across three sites it&#x27;s how mistakes happen. Here&#x27;s how to treat firewall policies as data: describe them in a file, validate them with Python and push them through the FortiOS REST API, safely.</p>
+      <div class="article-meta"><time datetime="2026-09-24">Sep 24, 2026</time><span>4 min read</span><span>by Mohammadreza Nobahari</span></div>
+    </header>
+    <div class="prose">
+<h2>Why not just use the GUI?</h2>
+<p>The FortiGate GUI is excellent for one-off changes. It falls apart when you need to do the same change many times: onboarding a new branch office, opening a service for twenty servers, or keeping three sites consistent. Manual work at scale produces three predictable problems:</p>
+<ul>
+  <li><strong>Inconsistent naming</strong>, so nobody can find "the rule for the web servers" six months later.</li>
+  <li><strong>Over-permissive shortcuts</strong> like <code>service ALL</code> "just for testing" that never get removed.</li>
+  <li><strong>No history:</strong> who changed what, and why?</li>
+</ul>
+<p>The fix is to stop thinking of policies as clicks and start thinking of them as <strong>data</strong>.</p>
+
+<h2>Step 1: a least-privilege REST API admin</h2>
+<p>In FortiOS, go to <strong>System → Administrators → Create New → REST API Admin</strong>. Three settings matter:</p>
+<ol>
+  <li><strong>Admin profile:</strong> create a custom profile with read/write on <em>Firewall</em> only. Your script does not need to change system settings or VPNs.</li>
+  <li><strong>Trusted hosts:</strong> restrict the key to the IP of your automation host. A leaked key that only works from one machine is a much smaller problem.</li>
+  <li><strong>The API key</strong> is shown once. Store it in an environment variable or a secrets manager, never in the script or in Git.</li>
+</ol>
+
+<h2>Step 2: your first API call</h2>
+<p>The FortiOS REST API lives under <code>/api/v2/</code>. Configuration objects are under <code>cmdb</code>, live status under <code>monitor</code>. Listing all policies looks like this:</p>
+<pre data-lang="python"><code>import os
+import requests
+
+FGT = "https://fgt.lab.local"
+session = requests.Session()
+session.headers.update({"Authorization": f"Bearer {os.environ['FGT_TOKEN']}"})
+session.verify = "fgt-ca.pem"  # trust your CA. Do not use verify=False in production
+
+r = session.get(f"{FGT}/api/v2/cmdb/firewall/policy", params={"vdom": "root"}, timeout=10)
+r.raise_for_status()
+
+for p in r.json()["results"]:
+    print(p["policyid"], p["name"], p["action"])</code></pre>
+<p>If that prints your policy table, you're in. Everything else builds on this session object.</p>
+
+<h2>Step 3: describe intent, not clicks</h2>
+<p>Instead of writing API payloads by hand, keep a simple file that says what you <em>want</em>. Humans review this file; the script handles FortiOS details.</p>
+<pre data-lang="json"><code>[
+  {
+    "name": "LAN-to-WEB-HTTPS",
+    "src": "port2", "dst": "port3",
+    "srcaddr": "NET_LAN_USERS", "dstaddr": "GRP_WEB_SERVERS",
+    "service": ["HTTPS"],
+    "action": "accept"
+  },
+  {
+    "name": "LAN-to-DNS-DNS",
+    "src": "port2", "dst": "port3",
+    "srcaddr": "NET_LAN_USERS", "dstaddr": "HOST_DNS_01",
+    "service": ["DNS"],
+    "action": "accept"
+  }
+]</code></pre>
+<p>This file goes into Git. Now every change has a diff, an author and a commit message, and you can review a firewall change the same way you'd review code.</p>
+
+<h2>Step 4: validate before you push</h2>
+<p>This is where automation pays for itself. The script refuses to push anything that breaks your rules:</p>
+<pre data-lang="python"><code>import re
+
+NAME_RE = re.compile(r"^[A-Z0-9]+-to-[A-Z0-9]+-[A-Z0-9_]+$")
+
+def known_addresses():
+    names = set()
+    for path in ("firewall/address", "firewall/addrgrp"):
+        r = session.get(f"{FGT}/api/v2/cmdb/{path}", params={"vdom": "root"}, timeout=10)
+        r.raise_for_status()
+        names |= {obj["name"] for obj in r.json()["results"]}
+    return names
+
+def validate(rule, addresses):
+    errors = []
+    if not NAME_RE.match(rule["name"]):
+        errors.append(f"name '{rule['name']}' does not match SRC-to-DST-SERVICE")
+    if rule["action"] == "accept" and "ALL" in rule["service"]:
+        errors.append("accept + service ALL is not allowed")
+    for addr in (rule["srcaddr"], rule["dstaddr"]):
+        if addr != "all" and addr not in addresses:
+            errors.append(f"address object '{addr}' does not exist")
+    return errors</code></pre>
+<div class="callout"><span class="callout-label">Why</span><p>A typo in an address name in the GUI is a support ticket next week. A typo in the intent file is a red error message before anything touches the firewall.</p></div>
+
+<h2>Step 5: an idempotent push</h2>
+<p>"Idempotent" means you can run the script ten times and get the same result as running it once. We look up existing policies by name: if one exists we update it (<code>PUT</code>), otherwise we create it (<code>POST</code>). And we always start with a dry run.</p>
+<pre data-lang="python"><code>def to_payload(rule):
+    return {
+        "name": rule["name"],
+        "srcintf": [{"name": rule["src"]}],
+        "dstintf": [{"name": rule["dst"]}],
+        "srcaddr": [{"name": rule["srcaddr"]}],
+        "dstaddr": [{"name": rule["dstaddr"]}],
+        "service": [{"name": s} for s in rule["service"]],
+        "action": rule["action"],
+        "schedule": "always",
+        "logtraffic": "all",
+    }
+
+def existing_policies():
+    r = session.get(f"{FGT}/api/v2/cmdb/firewall/policy", params={"vdom": "root"}, timeout=10)
+    r.raise_for_status()
+    return {p["name"]: p["policyid"] for p in r.json()["results"]}
+
+def push(rules, dry_run=True):
+    existing = existing_policies()
+    for rule in rules:
+        if rule["name"] in existing:
+            method = "PUT"
+            url = f"{FGT}/api/v2/cmdb/firewall/policy/{existing[rule['name']]}"
+        else:
+            method = "POST"
+            url = f"{FGT}/api/v2/cmdb/firewall/policy"
+        if dry_run:
+            print(f"[dry-run] {method} {rule['name']}")
+            continue
+        r = session.request(method, url, params={"vdom": "root"}, json=to_payload(rule), timeout=10)
+        r.raise_for_status()
+        print(f"[ok] {method} {rule['name']}")</code></pre>
+<p>Tie it together with a small <code>main()</code> that loads the JSON, validates every rule, stops on the first error, and only pushes with an explicit <code>--apply</code> flag.</p>
+<div class="callout warn"><span class="callout-label">Careful</span><p>New policies are added at the <strong>bottom</strong> of the policy list, and FortiGate evaluates top-down. If a broader rule sits above yours, your new rule never matches. Plan your ordering, and check the "move" action in the API reference for your FortiOS version.</p></div>
+
+<h2>Step 6: logging and rollback</h2>
+<ul>
+  <li><strong>Back up first:</strong> before any apply run, download the config (<code>/api/v2/monitor/system/config/backup</code>) and store it with a timestamp.</li>
+  <li><strong>Log every call:</strong> method, policy name, HTTP status. When something goes wrong at 2 AM, that log is the first thing you want.</li>
+  <li><strong>Test in a lab VDOM</strong> or on a FortiGate-VM before production. The API is the same.</li>
+</ul>
+
+<h2>What you get</h2>
+<p>Once the pipeline exists, adding a rule means editing one JSON entry and running one command. Naming is always consistent, dangerous shortcuts are blocked by code, and Git tells you exactly who opened which port and why. That's the real win. Speed is nice, but <strong>predictability</strong> is what makes a security team trust automation.</p>
+    </div>
+    <div class="article-foot">
+      <div class="author-box">
+        <span class="logo-mark" aria-hidden="true">MN</span>
+        <p><strong>Mohammadreza Nobahari</strong>Network &amp; Security Engineer in Germany. I build secure networks, automate them with Python and teach how systems work. <a href="../index.html#contact">Get in touch</a>.</p>
+      </div>
+      <div class="post-nav" role="navigation" aria-label="More posts"><a class="prev" href="the-bridge-packet-flow.html"><small>← Newer</small>The Bridge: Why Every Developer Should Understand Packet Flow</a><a class="next" href="learn-like-a-gamer.html"><small>Older →</small>Learn Like a Gamer, Work Like a Pro</a></div>
+    </div>
+  </article>
+  <aside class="toc" aria-label="On this page">
+    <div class="toc-title">On this page</div>
+    <ol id="toc-list"></ol>
+    <div class="toc-share">
+      <button class="chip" type="button" id="copy-link">Copy link</button>
+      <a class="chip" href="https://www.linkedin.com/sharing/share-offsite/?url=https://mmdrz-n.github.io/posts/automating-fortigate-policies-python.html" target="_blank" rel="noopener">Share on LinkedIn</a>
+    </div>
+  </aside>
+</main>
+
+<div class="footer-wrap">
+  <footer>
+    <p>© 2026 Mohammadreza Nobahari · Network &amp; Security Engineer · Python Automation · Educator</p>
+    <div class="footer-links">
+      <a href="../feed.xml">RSS</a>
+      <a href="https://www.linkedin.com/in/mohammadreza-nobahari-54370526a" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/mmdrz-n" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+</div>
+
+<script src="../js/post.js"></script>
+<script src="../js/posts-data.js"></script>
+<script src="../js/fun.js"></script>
+<script src="../js/bot.js"></script>
+</body>
+</html>

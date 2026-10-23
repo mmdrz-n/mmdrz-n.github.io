@@ -1,0 +1,82 @@
+<!--
+title: FortiGate Debug Flow: A Practical Cheat Sheet
+title_de: FortiGate Debug Flow: Ein praktischer Spickzettel
+category: network-security
+date: 2026-10-20
+lede: "The firewall is blocking it" is a guess. Debug flow turns it into a fact. Here's the exact command sequence I use, how to read the output, and the five messages that explain 90% of dropped traffic.
+lede_de: Die genaue Befehlsfolge, wie man die Ausgabe liest, und die fünf Meldungen, die 90 % aller verworfenen Pakete erklären.
+-->
+<h2>When to reach for debug flow</h2>
+<p>Logs tell you what a policy decided. <strong>Debug flow</strong> tells you <em>why</em>: which route was chosen, which policy was checked, whether NAT happened and where the packet died. Use it when:</p>
+<ul>
+  <li>traffic is dropped but you see nothing in the forward traffic log,</li>
+  <li>you suspect routing, reverse-path or NAT problems,</li>
+  <li>a VPN tunnel is up but traffic doesn't pass,</li>
+  <li>someone insists "it worked yesterday".</li>
+</ul>
+
+<h2>The recipe</h2>
+<p>Always start from a clean state, filter as narrowly as possible, and limit the number of traced packets. Debug output on a busy firewall without a filter is a great way to make a bad day worse.</p>
+<pre data-lang="fortios"><code>diagnose debug reset
+diagnose debug flow filter clear
+diagnose debug flow filter addr 10.0.10.25
+diagnose debug flow filter proto 1
+diagnose debug flow show function-name enable
+diagnose debug console timestamp enable
+diagnose debug flow trace start 20
+diagnose debug enable</code></pre>
+<p>Now generate the traffic (here: a ping from <code>10.0.10.25</code>, which is why the filter is <code>proto 1</code> = ICMP). For TCP use <code>proto 6</code> and, if needed, <code>filter port 443</code>.</p>
+<p>When you're done, <strong>always</strong> turn it off:</p>
+<pre data-lang="fortios"><code>diagnose debug disable
+diagnose debug flow trace stop
+diagnose debug reset</code></pre>
+
+<h2>Reading the output</h2>
+<p>Each packet produces a short story. Read it top to bottom. These are the lines that matter:</p>
+<table>
+  <thead><tr><th>You see</th><th>It means</th></tr></thead>
+  <tbody>
+    <tr><td><code>allocate a new session-…</code></td><td>First packet of a new connection. Good, the FortiGate sees it.</td></tr>
+    <tr><td><code>Find an existing session, id-…</code></td><td>Packet belongs to a known session. Policy is not re-checked.</td></tr>
+    <tr><td><code>find a route: … gw-x.x.x.x via portN</code></td><td>The routing decision. Wrong interface here = routing problem, not policy.</td></tr>
+    <tr><td><code>Allowed by Policy-5:</code></td><td>Matched policy ID 5. Compare with the one you <em>expected</em>.</td></tr>
+    <tr><td><code>SNAT x.x.x.x-&gt;y.y.y.y:port</code></td><td>Source NAT applied on the way out.</td></tr>
+  </tbody>
+</table>
+
+<h2>The five classic drops</h2>
+<h3>1. <code>Denied by forward policy check (policy 0)</code></h3>
+<p>Policy 0 is the implicit deny at the bottom. <strong>No policy matched.</strong> Check interfaces (srcintf/dstintf), address objects, service and schedule. Very often the traffic enters on a different interface than you think.</p>
+<h3>2. <code>reverse path check fail, drop</code></h3>
+<p>Anti-spoofing (RPF). The FortiGate has no route back to the source via the interface the packet came in on. Typical causes: asymmetric routing, a missing static route for a remote subnet, or a VPN without a route for the remote network.</p>
+<h3>3. <code>iprope_in_check() check failed on policy 0, drop</code></h3>
+<p>Traffic <em>to the FortiGate itself</em> (local-in) was denied. Classic example: pinging or managing an interface where PING/HTTPS/SSH administrative access isn't enabled, or a trusted-hosts restriction on the admin account.</p>
+<h3>4. No output at all</h3>
+<p>The packet never reached the FortiGate. Check your filter first, then the switch, VLAN tagging, the client's default gateway, and ARP.</p>
+<h3>5. Allowed, but no reply</h3>
+<p>The trace shows <code>Allowed by Policy-N</code> and a route out, but nothing comes back. The problem is <em>downstream</em>: the server's firewall, its default gateway, or NAT on the return path.</p>
+
+<h2>Sniffer: the companion tool</h2>
+<p>Debug flow explains decisions; the sniffer proves packets exist on the wire. Verbosity 4 shows the interface name, which is gold for spotting wrong-interface problems:</p>
+<pre data-lang="fortios"><code># filter, verbosity 4 (with interface), unlimited count, local timestamps
+diagnose sniffer packet any 'host 10.0.10.25 and icmp' 4 0 l</code></pre>
+<p>Stop it with <kbd>Ctrl</kbd>+<kbd>C</kbd>. If you see the request leave <code>port1</code> but no reply arrive, the FortiGate is not your problem.</p>
+
+<h2>Sessions: when the policy changed but nothing happens</h2>
+<p>Existing sessions don't get re-evaluated against new policies. If you fixed a rule and the client still fails, look at the session table:</p>
+<pre data-lang="fortios"><code>diagnose sys session filter clear
+diagnose sys session filter src 10.0.10.25
+diagnose sys session filter dst 198.51.100.10
+diagnose sys session list
+diagnose sys session clear</code></pre>
+<div class="callout warn"><span class="callout-label">Danger</span><p><code>diagnose sys session clear</code> clears every session that matches the current filter. With <strong>no filter set, that is every session on the box</strong>, including your own SSH connection and everyone's VPN. Always run <code>filter</code> first and double-check it.</p></div>
+
+<h2>My checklist</h2>
+<ol>
+  <li>Reproduce the problem and write down source, destination, protocol and port.</li>
+  <li>Sniffer: does the packet arrive, and on which interface?</li>
+  <li>Debug flow: route → policy → NAT. Where does the story end?</li>
+  <li>Fix one thing. Clear only the affected sessions. Test again.</li>
+  <li>Turn debugging off and document what you found, for the next person.</li>
+</ol>
+<p>Want to practice the routing side? Try the <a href="subnetting-in-your-head.html">subnetting in your head</a> method. Half of all "policy problems" turn out to be a wrong mask.</p>
