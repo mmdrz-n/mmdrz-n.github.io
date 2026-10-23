@@ -1,0 +1,84 @@
+<!--
+title: The Bridge: Why Every Developer Should Understand Packet Flow
+title_de: Die Brücke: Warum jeder Entwickler den Paketfluss verstehen sollte
+category: network-security
+date: 2026-10-02
+featured: true
+lede: Developers who ignore networking build fragile apps. Network engineers who ignore code repeat manual work forever. This is the bridge: what actually happens between "fetch()" and the server, and how to debug it when it breaks.
+lede_de: Was zwischen „fetch()“ und dem Server wirklich passiert, der Unterschied zwischen Timeout und „Connection refused“ und die Befehle, mit denen Entwickler jeden Schritt selbst prüfen.
+-->
+<h2>"It works on my machine" is a network statement</h2>
+<p>Most production bugs that get escalated to the network team are not network bugs. And most "the app is slow" tickets that land with developers are not code bugs. Both sides lose hours because nobody owns the space <em>between</em> the code and the cable.</p>
+<p>You don't need a CCNP to cross that gap. You need a mental model of what one request does on its way out of your laptop, and a handful of commands to check each step. That's what this post gives you.</p>
+
+<h2>The life of one HTTPS request</h2>
+<p>Take a boring line of code: <code>fetch("https://api.example.com/users")</code>. Before a single byte of your JSON arrives, roughly six things have to go right:</p>
+<ol>
+  <li><strong>DNS.</strong> The OS asks a resolver for the IP of <code>api.example.com</code>. Wrong answer, stale cache or split-horizon DNS here, and everything after is aimed at the wrong place.</li>
+  <li><strong>Routing decision.</strong> Your machine compares that IP against its routing table. Not in your own subnet? The packet goes to the <strong>default gateway</strong>.</li>
+  <li><strong>ARP.</strong> To hand the packet to the gateway, your NIC needs the gateway's MAC address. ARP asks "who has 192.168.1.1?" on the local segment.</li>
+  <li><strong>Firewall policy, session and NAT.</strong> Your first SYN to port 443 hits the edge firewall. It checks its policy, creates a session entry and rewrites your private source IP to a public one, remembering the mapping so the reply can find its way back. This is where firewalls decide whether you get to talk at all.</li>
+  <li><strong>TCP handshake.</strong> SYN → SYN-ACK → ACK completes through that session.</li>
+  <li><strong>TLS handshake.</strong> Certificates, SNI, cipher negotiation. Inspection proxies and expired intermediate certificates live here.</li>
+</ol>
+<p>Only after all six does HTTP happen. When a request "hangs", the question is simply: <strong>which of these six steps didn't finish?</strong></p>
+
+<h2>Timeout vs. refused: the most useful distinction in debugging</h2>
+<p>If you only remember one thing from this post, make it this:</p>
+<table>
+  <thead><tr><th>Symptom</th><th>What it usually means</th><th>Where to look</th></tr></thead>
+  <tbody>
+    <tr><td><code>Connection refused</code> (instant)</td><td>The host is reachable and answered with a TCP RST. Nothing listens on that port.</td><td>Service down, wrong port, app bound to <code>127.0.0.1</code> only</td></tr>
+    <tr><td><code>Connection timed out</code> (slow)</td><td>Packets are silently dropped. Nobody answered at all.</td><td>Firewall policy, security group, missing route, wrong IP</td></tr>
+    <tr><td><code>Could not resolve host</code></td><td>Step 1 failed.</td><td>DNS resolver, hosts file, VPN DNS settings</td></tr>
+    <tr><td>TLS / certificate error</td><td>TCP worked, step 5 failed.</td><td>Certificate chain, SNI, SSL inspection proxy</td></tr>
+    <tr><td>Small requests work, big ones hang</td><td>Almost always MTU.</td><td>VPN tunnels, PPPoE, blocked ICMP</td></tr>
+  </tbody>
+</table>
+<div class="callout"><span class="callout-label">Rule</span><p>A firewall that <em>denies</em> usually <em>drops</em>. That's why a blocked port looks like a timeout, not an error. "Refused" means you got through the network and the server itself said no.</p></div>
+
+<h2>The MTU trap</h2>
+<p>Ethernet frames carry 1500 bytes of payload by default. Wrap traffic in an IPsec or WireGuard tunnel and some of those bytes go to headers, so the effective size shrinks. If something in the path also blocks ICMP "fragmentation needed" messages, large packets vanish silently while small ones pass. The login page loads, the file upload never finishes.</p>
+<p>You can test it in ten seconds. 1472 bytes of ICMP payload + 28 bytes of headers = exactly 1500:</p>
+<pre data-lang="powershell"><code># Windows: -f = don't fragment, -l = payload size
+ping -f -l 1472 api.example.com
+
+# Linux
+ping -M do -s 1472 api.example.com
+
+# macOS: -D sets the don't-fragment bit
+ping -D -s 1472 api.example.com</code></pre>
+<p>If 1472 fails but 1400 works, you've found your problem. Lower the size until it passes; that number + 28 is your real path MTU.</p>
+
+<h2>A developer's network toolkit</h2>
+<p>Each tool checks one step from the list above. Learn them in this order:</p>
+<pre data-lang="powershell"><code># 1. DNS: what IP does this name resolve to?
+Resolve-DnsName api.example.com        # Windows
+dig +short api.example.com             # Linux / macOS
+
+# 2-5. Can I reach the port at all? (routing + firewall + TCP)
+Test-NetConnection api.example.com -Port 443
+nc -vz api.example.com 443
+
+# 6. Full request with TLS details and timings
+curl -v https://api.example.com/health
+
+# Where does the path die?
+tracert api.example.com                # Windows
+traceroute api.example.com             # Linux / macOS
+
+# What is MY app actually listening on?
+netstat -ano | findstr LISTENING       # Windows
+ss -tlnp                               # Linux</code></pre>
+<div class="callout ok"><span class="callout-label">Tip</span><p>When you open a ticket with the network team, paste the output of <code>Test-NetConnection</code> and <code>curl -v</code>. A ticket with "TCP 443 to 10.20.0.15 times out from 10.10.5.22" gets fixed in minutes. "The API is broken" gets fixed on Thursday.</p></div>
+
+<h2>What network engineers can borrow from developers</h2>
+<p>The bridge goes both ways. Developers have spent twenty years building habits that infrastructure people are only now adopting:</p>
+<ul>
+  <li><strong>Version control</strong> for configs: a firewall policy change should have a diff and a reason, just like a pull request.</li>
+  <li><strong>Automation</strong> instead of copy-paste CLI sessions. I wrote about that in <a href="automating-fortigate-policies-python.html">Automating FortiGate Policies with Python</a>.</li>
+  <li><strong>Tests:</strong> a script that checks "can VLAN 20 still reach the file server?" after every change is a unit test for your network.</li>
+</ul>
+
+<h2>Takeaway</h2>
+<p>You don't need to become a network engineer. You need to know the six steps, the difference between a timeout and a refusal, and which command tests which step. That's the bridge. Walk it a few times and you'll never again lose a day to a problem that was "just the firewall".</p>

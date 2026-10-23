@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FortiGate Debug Flow: A Practical Cheat Sheet · Mohammadreza Nobahari</title>
+  <meta name="description" content="&quot;The firewall is blocking it&quot; is a guess. Debug flow turns it into a fact. Here&#x27;s the exact command sequence I use, how to read the output, and the five messages that explain 90% of dropped traffic.">
+  <meta name="author" content="Mohammadreza Nobahari">
+  <link rel="canonical" href="https://mmdrz-n.github.io/posts/fortigate-debug-flow-cheatsheet.html">
+  <link rel="alternate" type="application/rss+xml" title="Mohammadreza Nobahari · Writing" href="../feed.xml">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1424'/%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%2338bdf8' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-size='26' font-weight='700' text-anchor='middle' fill='%2338bdf8'%3EMN%3C/text%3E%3C/svg%3E">
+  <meta property="og:title" content="FortiGate Debug Flow: A Practical Cheat Sheet">
+  <meta property="og:description" content="&quot;The firewall is blocking it&quot; is a guess. Debug flow turns it into a fact. Here&#x27;s the exact command sequence I use, how to read the output, and the five messages that explain 90% of dropped traffic.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://mmdrz-n.github.io/posts/fortigate-debug-flow-cheatsheet.html">
+  <meta property="article:published_time" content="2026-10-20">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "FortiGate Debug Flow: A Practical Cheat Sheet", "description": "\"The firewall is blocking it\" is a guess. Debug flow turns it into a fact. Here's the exact command sequence I use, how to read the output, and the five messages that explain 90% of dropped traffic.", "datePublished": "2026-10-20", "author": {"@type": "Person", "name": "Mohammadreza Nobahari", "url": "https://mmdrz-n.github.io/"}, "mainEntityOfPage": "https://mmdrz-n.github.io/posts/fortigate-debug-flow-cheatsheet.html"}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/blog.css">
+  <link rel="stylesheet" href="../css/post.css">
+</head>
+<body>
+
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav aria-label="Primary">
+  <a href="../index.html" class="nav-logo" aria-label="Mohammadreza Nobahari, home"><span class="logo-mark" aria-hidden="true">MN</span><span class="logo-text">Mohammadreza Nobahari</span></a>
+  <div class="nav-actions">
+    <a class="nav-home" href="../index.html">Home</a>
+    <a class="nav-home" href="../blog.html">Writing</a>
+    <a class="btn btn-primary btn-sm" href="../index.html#contact">Contact</a>
+  </div>
+</nav>
+
+<main id="main" class="post-main">
+  <article>
+    <div class="crumbs"><a href="../blog.html">Writing</a> / Network security</div>
+    <header class="article-head">
+      <div class="post-cat">Network security</div>
+      <h1>FortiGate Debug Flow: A Practical Cheat Sheet</h1>
+      <p class="article-lede">&quot;The firewall is blocking it&quot; is a guess. Debug flow turns it into a fact. Here&#x27;s the exact command sequence I use, how to read the output, and the five messages that explain 90% of dropped traffic.</p>
+      <div class="article-meta"><time datetime="2026-10-20">Oct 20, 2026</time><span>3 min read</span><span>by Mohammadreza Nobahari</span></div>
+    </header>
+    <div class="prose">
+<h2>When to reach for debug flow</h2>
+<p>Logs tell you what a policy decided. <strong>Debug flow</strong> tells you <em>why</em>: which route was chosen, which policy was checked, whether NAT happened and where the packet died. Use it when:</p>
+<ul>
+  <li>traffic is dropped but you see nothing in the forward traffic log,</li>
+  <li>you suspect routing, reverse-path or NAT problems,</li>
+  <li>a VPN tunnel is up but traffic doesn't pass,</li>
+  <li>someone insists "it worked yesterday".</li>
+</ul>
+
+<h2>The recipe</h2>
+<p>Always start from a clean state, filter as narrowly as possible, and limit the number of traced packets. Debug output on a busy firewall without a filter is a great way to make a bad day worse.</p>
+<pre data-lang="fortios"><code>diagnose debug reset
+diagnose debug flow filter clear
+diagnose debug flow filter addr 10.0.10.25
+diagnose debug flow filter proto 1
+diagnose debug flow show function-name enable
+diagnose debug console timestamp enable
+diagnose debug flow trace start 20
+diagnose debug enable</code></pre>
+<p>Now generate the traffic (here: a ping from <code>10.0.10.25</code>, which is why the filter is <code>proto 1</code> = ICMP). For TCP use <code>proto 6</code> and, if needed, <code>filter port 443</code>.</p>
+<p>When you're done, <strong>always</strong> turn it off:</p>
+<pre data-lang="fortios"><code>diagnose debug disable
+diagnose debug flow trace stop
+diagnose debug reset</code></pre>
+
+<h2>Reading the output</h2>
+<p>Each packet produces a short story. Read it top to bottom. These are the lines that matter:</p>
+<table>
+  <thead><tr><th>You see</th><th>It means</th></tr></thead>
+  <tbody>
+    <tr><td><code>allocate a new session-…</code></td><td>First packet of a new connection. Good, the FortiGate sees it.</td></tr>
+    <tr><td><code>Find an existing session, id-…</code></td><td>Packet belongs to a known session. Policy is not re-checked.</td></tr>
+    <tr><td><code>find a route: … gw-x.x.x.x via portN</code></td><td>The routing decision. Wrong interface here = routing problem, not policy.</td></tr>
+    <tr><td><code>Allowed by Policy-5:</code></td><td>Matched policy ID 5. Compare with the one you <em>expected</em>.</td></tr>
+    <tr><td><code>SNAT x.x.x.x-&gt;y.y.y.y:port</code></td><td>Source NAT applied on the way out.</td></tr>
+  </tbody>
+</table>
+
+<h2>The five classic drops</h2>
+<h3>1. <code>Denied by forward policy check (policy 0)</code></h3>
+<p>Policy 0 is the implicit deny at the bottom. <strong>No policy matched.</strong> Check interfaces (srcintf/dstintf), address objects, service and schedule. Very often the traffic enters on a different interface than you think.</p>
+<h3>2. <code>reverse path check fail, drop</code></h3>
+<p>Anti-spoofing (RPF). The FortiGate has no route back to the source via the interface the packet came in on. Typical causes: asymmetric routing, a missing static route for a remote subnet, or a VPN without a route for the remote network.</p>
+<h3>3. <code>iprope_in_check() check failed on policy 0, drop</code></h3>
+<p>Traffic <em>to the FortiGate itself</em> (local-in) was denied. Classic example: pinging or managing an interface where PING/HTTPS/SSH administrative access isn't enabled, or a trusted-hosts restriction on the admin account.</p>
+<h3>4. No output at all</h3>
+<p>The packet never reached the FortiGate. Check your filter first, then the switch, VLAN tagging, the client's default gateway, and ARP.</p>
+<h3>5. Allowed, but no reply</h3>
+<p>The trace shows <code>Allowed by Policy-N</code> and a route out, but nothing comes back. The problem is <em>downstream</em>: the server's firewall, its default gateway, or NAT on the return path.</p>
+
+<h2>Sniffer: the companion tool</h2>
+<p>Debug flow explains decisions; the sniffer proves packets exist on the wire. Verbosity 4 shows the interface name, which is gold for spotting wrong-interface problems:</p>
+<pre data-lang="fortios"><code># filter, verbosity 4 (with interface), unlimited count, local timestamps
+diagnose sniffer packet any 'host 10.0.10.25 and icmp' 4 0 l</code></pre>
+<p>Stop it with <kbd>Ctrl</kbd>+<kbd>C</kbd>. If you see the request leave <code>port1</code> but no reply arrive, the FortiGate is not your problem.</p>
+
+<h2>Sessions: when the policy changed but nothing happens</h2>
+<p>Existing sessions don't get re-evaluated against new policies. If you fixed a rule and the client still fails, look at the session table:</p>
+<pre data-lang="fortios"><code>diagnose sys session filter clear
+diagnose sys session filter src 10.0.10.25
+diagnose sys session filter dst 198.51.100.10
+diagnose sys session list
+diagnose sys session clear</code></pre>
+<div class="callout warn"><span class="callout-label">Danger</span><p><code>diagnose sys session clear</code> clears every session that matches the current filter. With <strong>no filter set, that is every session on the box</strong>, including your own SSH connection and everyone's VPN. Always run <code>filter</code> first and double-check it.</p></div>
+
+<h2>My checklist</h2>
+<ol>
+  <li>Reproduce the problem and write down source, destination, protocol and port.</li>
+  <li>Sniffer: does the packet arrive, and on which interface?</li>
+  <li>Debug flow: route → policy → NAT. Where does the story end?</li>
+  <li>Fix one thing. Clear only the affected sessions. Test again.</li>
+  <li>Turn debugging off and document what you found, for the next person.</li>
+</ol>
+<p>Want to practice the routing side? Try the <a href="subnetting-in-your-head.html">subnetting in your head</a> method. Half of all "policy problems" turn out to be a wrong mask.</p>
+    </div>
+    <div class="article-foot">
+      <div class="author-box">
+        <span class="logo-mark" aria-hidden="true">MN</span>
+        <p><strong>Mohammadreza Nobahari</strong>Network &amp; Security Engineer in Germany. I build secure networks, automate them with Python and teach how systems work. <a href="../index.html#contact">Get in touch</a>.</p>
+      </div>
+      <div class="post-nav" role="navigation" aria-label="More posts"><a class="next" href="subnetting-in-your-head.html"><small>Older →</small>Subnetting in Your Head: The Block-Size Method</a></div>
+    </div>
+  </article>
+  <aside class="toc" aria-label="On this page">
+    <div class="toc-title">On this page</div>
+    <ol id="toc-list"></ol>
+    <div class="toc-share">
+      <button class="chip" type="button" id="copy-link">Copy link</button>
+      <a class="chip" href="https://www.linkedin.com/sharing/share-offsite/?url=https://mmdrz-n.github.io/posts/fortigate-debug-flow-cheatsheet.html" target="_blank" rel="noopener">Share on LinkedIn</a>
+    </div>
+  </aside>
+</main>
+
+<div class="footer-wrap">
+  <footer>
+    <p>© 2026 Mohammadreza Nobahari · Network &amp; Security Engineer · Python Automation · Educator</p>
+    <div class="footer-links">
+      <a href="../feed.xml">RSS</a>
+      <a href="https://www.linkedin.com/in/mohammadreza-nobahari-54370526a" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/mmdrz-n" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+</div>
+
+<script src="../js/post.js"></script>
+<script src="../js/posts-data.js"></script>
+<script src="../js/fun.js"></script>
+<script src="../js/bot.js"></script>
+</body>
+</html>

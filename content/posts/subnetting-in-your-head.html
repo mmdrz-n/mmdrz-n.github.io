@@ -1,0 +1,69 @@
+<!--
+title: Subnetting in Your Head: The Block-Size Method
+title_de: Subnetting im Kopf: Die Blockgrößen-Methode
+category: labs
+date: 2026-10-12
+lede: You don't need a calculator to subnet. One small table and one division get you the network, broadcast and host range of any IPv4 address in under ten seconds. Here's the method I teach, with worked examples.
+lede_de: Eine kleine Tabelle und eine Division: Netz, Broadcast und Hostbereich jeder IPv4-Adresse in unter zehn Sekunden – mit durchgerechneten Beispielen.
+-->
+<h2>Why learn this at all?</h2>
+<p>Calculators exist. There's even one on <a href="../index.html#lab">my homepage</a>. But in an interview, an exam, or a 2 AM outage with someone reading a config out loud, the person who can say "that's in the .128 network, broadcast .191" without opening anything is the person everyone trusts.</p>
+<p>The good news: you only need to memorise <strong>one row of eight numbers</strong>.</p>
+
+<h2>The only table you need</h2>
+<p>Inside any octet, the mask can only take eight values. Each one has a <strong>block size</strong>: the step between networks.</p>
+<table>
+  <thead><tr><th>Bits in the octet</th><th>Mask octet</th><th>Block size</th><th>Example prefixes</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>128</td><td>128</td><td>/25, /17, /9</td></tr>
+    <tr><td>2</td><td>192</td><td>64</td><td>/26, /18, /10</td></tr>
+    <tr><td>3</td><td>224</td><td>32</td><td>/27, /19, /11</td></tr>
+    <tr><td>4</td><td>240</td><td>16</td><td>/28, /20, /12</td></tr>
+    <tr><td>5</td><td>248</td><td>8</td><td>/29, /21, /13</td></tr>
+    <tr><td>6</td><td>252</td><td>4</td><td>/30, /22, /14</td></tr>
+    <tr><td>7</td><td>254</td><td>2</td><td>/31, /23, /15</td></tr>
+    <tr><td>8</td><td>255</td><td>1</td><td>/32, /24, /16</td></tr>
+  </tbody>
+</table>
+<div class="callout ok"><span class="callout-label">Shortcut</span><p>Block size = <strong>256 − mask octet</strong>. You never have to memorise the third column, only the masks.</p></div>
+
+<h2>The method in four steps</h2>
+<ol>
+  <li><strong>Find the interesting octet.</strong> /1–/8 → first octet, /9–/16 → second, /17–/24 → third, /25–/32 → fourth.</li>
+  <li><strong>Get the block size</strong> from the table (prefix minus 0, 8, 16 or 24 gives you the "bits in the octet").</li>
+  <li><strong>Network:</strong> take the IP's value in that octet, round <em>down</em> to a multiple of the block size. Octets after it become 0.</li>
+  <li><strong>Broadcast:</strong> network + block size − 1 in that octet. Octets after it become 255.</li>
+</ol>
+<p>For /30 and shorter prefixes, usable hosts = 2<sup>(32 − prefix)</sup> − 2 (/31 and /32 are special, see below). First host = network + 1, last host = broadcast − 1.</p>
+
+<h2>Example 1: 172.16.45.130/26</h2>
+<ul>
+  <li>/26 → fourth octet, 26 − 24 = 2 bits → mask 192, <strong>block 64</strong>.</li>
+  <li>130 rounded down to a multiple of 64 → <strong>128</strong>.</li>
+  <li>Network <code>172.16.45.128</code>, broadcast 128 + 64 − 1 = <code>172.16.45.191</code>.</li>
+  <li>Hosts <code>.129</code> – <code>.190</code>, 2<sup>6</sup> − 2 = <strong>62 usable</strong>.</li>
+</ul>
+
+<h2>Example 2: 10.20.77.9/20</h2>
+<ul>
+  <li>/20 → third octet, 20 − 16 = 4 bits → mask 240, <strong>block 16</strong>.</li>
+  <li>77 rounded down to a multiple of 16 → <strong>64</strong>.</li>
+  <li>Network <code>10.20.64.0</code>, broadcast <code>10.20.79.255</code> (64 + 16 − 1 = 79, last octet 255).</li>
+  <li>2<sup>12</sup> − 2 = <strong>4,094 usable hosts</strong>.</li>
+</ul>
+
+<h2>Example 3: the questions interviewers love</h2>
+<p><strong>"How many /27s fit in a /24?"</strong> 2<sup>(27 − 24)</sup> = <strong>8</strong>. Each has a block size of 32.</p>
+<p><strong>"I need 50 hosts. Which prefix?"</strong> Find the smallest 2<sup>n</sup> − 2 ≥ 50: 64 − 2 = 62 → 6 host bits → <strong>/26</strong>.</p>
+<p><strong>"I need 500 hosts?"</strong> 512 − 2 = 510 → 9 host bits → <strong>/23</strong>.</p>
+<p><strong>"Are 192.168.1.70 and 192.168.1.130 in the same /25?"</strong> Block 128: 70 → network .0, 130 → network .128. <strong>No.</strong></p>
+
+<h2>Edge cases worth knowing</h2>
+<ul>
+  <li><strong>/31</strong>: two addresses, both usable on point-to-point links (RFC 3021). No broadcast.</li>
+  <li><strong>/32</strong>: a single host. You'll see it in host routes, loopbacks and firewall address objects.</li>
+  <li><strong>Wildcard masks</strong> (ACLs, OSPF) are just 255 − mask in every octet: /26 → <code>0.0.0.63</code>.</li>
+</ul>
+
+<h2>Practice until it's boring</h2>
+<p>Speed comes from repetition, not understanding. Once you understand the four steps, do twenty random examples a day for a week. I built a small game for exactly that: <a href="../index.html#arcade">Subnet Sprint</a> on my homepage gives you 60 seconds of random questions and remembers your high score. Beat 15 and you're interview-ready.</p>

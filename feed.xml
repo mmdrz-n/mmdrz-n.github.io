@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Mohammadreza Nobahari · Writing</title>
+  <link>https://mmdrz-n.github.io/blog.html</link>
+  <atom:link href="https://mmdrz-n.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+  <description>Notes on network security, Python automation and systems thinking.</description>
+  <language>en</language>
+  <item>
+    <title>FortiGate Debug Flow: A Practical Cheat Sheet</title>
+    <link>https://mmdrz-n.github.io/posts/fortigate-debug-flow-cheatsheet.html</link>
+    <guid>https://mmdrz-n.github.io/posts/fortigate-debug-flow-cheatsheet.html</guid>
+    <pubDate>Tue, 20 Oct 2026 08:00:00 +0000</pubDate>
+    <category>Network security</category>
+    <description>&quot;The firewall is blocking it&quot; is a guess. Debug flow turns it into a fact. Here&#x27;s the exact command sequence I use, how to read the output, and the five messages that explain 90% of dropped traffic.</description>
+  </item>
+  <item>
+    <title>Subnetting in Your Head: The Block-Size Method</title>
+    <link>https://mmdrz-n.github.io/posts/subnetting-in-your-head.html</link>
+    <guid>https://mmdrz-n.github.io/posts/subnetting-in-your-head.html</guid>
+    <pubDate>Mon, 12 Oct 2026 08:00:00 +0000</pubDate>
+    <category>Labs</category>
+    <description>You don&#x27;t need a calculator to subnet. One small table and one division get you the network, broadcast and host range of any IPv4 address in under ten seconds. Here&#x27;s the method I teach, with worked examples.</description>
+  </item>
+  <item>
+    <title>The Bridge: Why Every Developer Should Understand Packet Flow</title>
+    <link>https://mmdrz-n.github.io/posts/the-bridge-packet-flow.html</link>
+    <guid>https://mmdrz-n.github.io/posts/the-bridge-packet-flow.html</guid>
+    <pubDate>Fri, 02 Oct 2026 08:00:00 +0000</pubDate>
+    <category>Network security</category>
+    <description>Developers who ignore networking build fragile apps. Network engineers who ignore code repeat manual work forever. This is the bridge: what actually happens between &quot;fetch()&quot; and the server, and how to debug it when it breaks.</description>
+  </item>
+  <item>
+    <title>Automating FortiGate Policies with Python</title>
+    <link>https://mmdrz-n.github.io/posts/automating-fortigate-policies-python.html</link>
+    <guid>https://mmdrz-n.github.io/posts/automating-fortigate-policies-python.html</guid>
+    <pubDate>Thu, 24 Sep 2026 08:00:00 +0000</pubDate>
+    <category>Python automation</category>
+    <description>Clicking through the GUI for one rule is fine. For fifty rules across three sites it&#x27;s how mistakes happen. Here&#x27;s how to treat firewall policies as data: describe them in a file, validate them with Python and push them through the FortiOS REST API, safely.</description>
+  </item>
+  <item>
+    <title>Learn Like a Gamer, Work Like a Pro</title>
+    <link>https://mmdrz-n.github.io/posts/learn-like-a-gamer.html</link>
+    <guid>https://mmdrz-n.github.io/posts/learn-like-a-gamer.html</guid>
+    <pubDate>Tue, 15 Sep 2026 08:00:00 +0000</pubDate>
+    <category>Career strategy</category>
+    <description>Games taught me persistence, pattern recognition and systems thinking long before I touched a CLI. Here&#x27;s how to turn the way gamers learn into a practical strategy for getting good at networking and security.</description>
+  </item>
+  <item>
+    <title>Building a Threat Intelligence Dashboard with Python</title>
+    <link>https://mmdrz-n.github.io/posts/threat-intel-dashboard.html</link>
+    <guid>https://mmdrz-n.github.io/posts/threat-intel-dashboard.html</guid>
+    <pubDate>Thu, 03 Sep 2026 08:00:00 +0000</pubDate>
+    <category>Labs</category>
+    <description>Exported firewall logs are thousands of lines nobody reads. With about 80 lines of standard-library Python you can parse them, score suspicious behaviour and produce an HTML report your team will actually open in the weekly security meeting.</description>
+  </item>
+</channel>
+</rss>

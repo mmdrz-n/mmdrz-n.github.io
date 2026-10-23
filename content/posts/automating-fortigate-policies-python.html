@@ -1,0 +1,135 @@
+<!--
+title: Automating FortiGate Policies with Python
+title_de: FortiGate-Policies mit Python automatisieren
+category: python-automation
+date: 2026-09-24
+lede: Clicking through the GUI for one rule is fine. For fifty rules across three sites it's how mistakes happen. Here's how to treat firewall policies as data: describe them in a file, validate them with Python and push them through the FortiOS REST API, safely.
+lede_de: Firewall-Policies als Daten: in einer Datei beschreiben, mit Python validieren und sicher über die FortiOS-REST-API ausrollen – idempotent, mit Dry-Run und Git-Historie.
+-->
+<h2>Why not just use the GUI?</h2>
+<p>The FortiGate GUI is excellent for one-off changes. It falls apart when you need to do the same change many times: onboarding a new branch office, opening a service for twenty servers, or keeping three sites consistent. Manual work at scale produces three predictable problems:</p>
+<ul>
+  <li><strong>Inconsistent naming</strong>, so nobody can find "the rule for the web servers" six months later.</li>
+  <li><strong>Over-permissive shortcuts</strong> like <code>service ALL</code> "just for testing" that never get removed.</li>
+  <li><strong>No history:</strong> who changed what, and why?</li>
+</ul>
+<p>The fix is to stop thinking of policies as clicks and start thinking of them as <strong>data</strong>.</p>
+
+<h2>Step 1: a least-privilege REST API admin</h2>
+<p>In FortiOS, go to <strong>System → Administrators → Create New → REST API Admin</strong>. Three settings matter:</p>
+<ol>
+  <li><strong>Admin profile:</strong> create a custom profile with read/write on <em>Firewall</em> only. Your script does not need to change system settings or VPNs.</li>
+  <li><strong>Trusted hosts:</strong> restrict the key to the IP of your automation host. A leaked key that only works from one machine is a much smaller problem.</li>
+  <li><strong>The API key</strong> is shown once. Store it in an environment variable or a secrets manager, never in the script or in Git.</li>
+</ol>
+
+<h2>Step 2: your first API call</h2>
+<p>The FortiOS REST API lives under <code>/api/v2/</code>. Configuration objects are under <code>cmdb</code>, live status under <code>monitor</code>. Listing all policies looks like this:</p>
+<pre data-lang="python"><code>import os
+import requests
+
+FGT = "https://fgt.lab.local"
+session = requests.Session()
+session.headers.update({"Authorization": f"Bearer {os.environ['FGT_TOKEN']}"})
+session.verify = "fgt-ca.pem"  # trust your CA. Do not use verify=False in production
+
+r = session.get(f"{FGT}/api/v2/cmdb/firewall/policy", params={"vdom": "root"}, timeout=10)
+r.raise_for_status()
+
+for p in r.json()["results"]:
+    print(p["policyid"], p["name"], p["action"])</code></pre>
+<p>If that prints your policy table, you're in. Everything else builds on this session object.</p>
+
+<h2>Step 3: describe intent, not clicks</h2>
+<p>Instead of writing API payloads by hand, keep a simple file that says what you <em>want</em>. Humans review this file; the script handles FortiOS details.</p>
+<pre data-lang="json"><code>[
+  {
+    "name": "LAN-to-WEB-HTTPS",
+    "src": "port2", "dst": "port3",
+    "srcaddr": "NET_LAN_USERS", "dstaddr": "GRP_WEB_SERVERS",
+    "service": ["HTTPS"],
+    "action": "accept"
+  },
+  {
+    "name": "LAN-to-DNS-DNS",
+    "src": "port2", "dst": "port3",
+    "srcaddr": "NET_LAN_USERS", "dstaddr": "HOST_DNS_01",
+    "service": ["DNS"],
+    "action": "accept"
+  }
+]</code></pre>
+<p>This file goes into Git. Now every change has a diff, an author and a commit message, and you can review a firewall change the same way you'd review code.</p>
+
+<h2>Step 4: validate before you push</h2>
+<p>This is where automation pays for itself. The script refuses to push anything that breaks your rules:</p>
+<pre data-lang="python"><code>import re
+
+NAME_RE = re.compile(r"^[A-Z0-9]+-to-[A-Z0-9]+-[A-Z0-9_]+$")
+
+def known_addresses():
+    names = set()
+    for path in ("firewall/address", "firewall/addrgrp"):
+        r = session.get(f"{FGT}/api/v2/cmdb/{path}", params={"vdom": "root"}, timeout=10)
+        r.raise_for_status()
+        names |= {obj["name"] for obj in r.json()["results"]}
+    return names
+
+def validate(rule, addresses):
+    errors = []
+    if not NAME_RE.match(rule["name"]):
+        errors.append(f"name '{rule['name']}' does not match SRC-to-DST-SERVICE")
+    if rule["action"] == "accept" and "ALL" in rule["service"]:
+        errors.append("accept + service ALL is not allowed")
+    for addr in (rule["srcaddr"], rule["dstaddr"]):
+        if addr != "all" and addr not in addresses:
+            errors.append(f"address object '{addr}' does not exist")
+    return errors</code></pre>
+<div class="callout"><span class="callout-label">Why</span><p>A typo in an address name in the GUI is a support ticket next week. A typo in the intent file is a red error message before anything touches the firewall.</p></div>
+
+<h2>Step 5: an idempotent push</h2>
+<p>"Idempotent" means you can run the script ten times and get the same result as running it once. We look up existing policies by name: if one exists we update it (<code>PUT</code>), otherwise we create it (<code>POST</code>). And we always start with a dry run.</p>
+<pre data-lang="python"><code>def to_payload(rule):
+    return {
+        "name": rule["name"],
+        "srcintf": [{"name": rule["src"]}],
+        "dstintf": [{"name": rule["dst"]}],
+        "srcaddr": [{"name": rule["srcaddr"]}],
+        "dstaddr": [{"name": rule["dstaddr"]}],
+        "service": [{"name": s} for s in rule["service"]],
+        "action": rule["action"],
+        "schedule": "always",
+        "logtraffic": "all",
+    }
+
+def existing_policies():
+    r = session.get(f"{FGT}/api/v2/cmdb/firewall/policy", params={"vdom": "root"}, timeout=10)
+    r.raise_for_status()
+    return {p["name"]: p["policyid"] for p in r.json()["results"]}
+
+def push(rules, dry_run=True):
+    existing = existing_policies()
+    for rule in rules:
+        if rule["name"] in existing:
+            method = "PUT"
+            url = f"{FGT}/api/v2/cmdb/firewall/policy/{existing[rule['name']]}"
+        else:
+            method = "POST"
+            url = f"{FGT}/api/v2/cmdb/firewall/policy"
+        if dry_run:
+            print(f"[dry-run] {method} {rule['name']}")
+            continue
+        r = session.request(method, url, params={"vdom": "root"}, json=to_payload(rule), timeout=10)
+        r.raise_for_status()
+        print(f"[ok] {method} {rule['name']}")</code></pre>
+<p>Tie it together with a small <code>main()</code> that loads the JSON, validates every rule, stops on the first error, and only pushes with an explicit <code>--apply</code> flag.</p>
+<div class="callout warn"><span class="callout-label">Careful</span><p>New policies are added at the <strong>bottom</strong> of the policy list, and FortiGate evaluates top-down. If a broader rule sits above yours, your new rule never matches. Plan your ordering, and check the "move" action in the API reference for your FortiOS version.</p></div>
+
+<h2>Step 6: logging and rollback</h2>
+<ul>
+  <li><strong>Back up first:</strong> before any apply run, download the config (<code>/api/v2/monitor/system/config/backup</code>) and store it with a timestamp.</li>
+  <li><strong>Log every call:</strong> method, policy name, HTTP status. When something goes wrong at 2 AM, that log is the first thing you want.</li>
+  <li><strong>Test in a lab VDOM</strong> or on a FortiGate-VM before production. The API is the same.</li>
+</ul>
+
+<h2>What you get</h2>
+<p>Once the pipeline exists, adding a rule means editing one JSON entry and running one command. Naming is always consistent, dangerous shortcuts are blocked by code, and Git tells you exactly who opened which port and why. That's the real win. Speed is nice, but <strong>predictability</strong> is what makes a security team trust automation.</p>

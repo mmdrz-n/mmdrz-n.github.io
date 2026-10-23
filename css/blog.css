@@ -65,21 +65,6 @@
 .chip:hover { color: var(--text); border-color: var(--muted); }
 .chip[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: rgba(56, 189, 248, 0.08); }
 
-.post {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-}
-.post[hidden] { display: none; }
-
-.post-cat { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); margin-bottom: 0.75rem; }
-.post h2, .post h3 { font-size: 1.2rem; font-weight: 600; line-height: 1.35; color: var(--text); margin-bottom: 0.6rem; }
-.post p { color: var(--muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 1.25rem; flex-grow: 1; }
-.post-meta { font-size: 0.8125rem; color: var(--muted); margin-top: auto; padding-top: 0.9rem; border-top: 1px solid var(--border); }
-
 .post-featured { margin-bottom: 1.25rem; padding: 2rem; }
 .post-featured h2 { font-size: clamp(1.4rem, 3vw, 1.85rem); }
 .post-featured p { max-width: 720px; font-size: 1rem; }

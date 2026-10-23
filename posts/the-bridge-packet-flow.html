@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bridge: Why Every Developer Should Understand Packet Flow · Mohammadreza Nobahari</title>
+  <meta name="description" content="Developers who ignore networking build fragile apps. Network engineers who ignore code repeat manual work forever. This is the bridge: what actually happens between &quot;fetch()&quot; and the server, and how to debug it when it breaks.">
+  <meta name="author" content="Mohammadreza Nobahari">
+  <link rel="canonical" href="https://mmdrz-n.github.io/posts/the-bridge-packet-flow.html">
+  <link rel="alternate" type="application/rss+xml" title="Mohammadreza Nobahari · Writing" href="../feed.xml">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1424'/%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%2338bdf8' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-size='26' font-weight='700' text-anchor='middle' fill='%2338bdf8'%3EMN%3C/text%3E%3C/svg%3E">
+  <meta property="og:title" content="The Bridge: Why Every Developer Should Understand Packet Flow">
+  <meta property="og:description" content="Developers who ignore networking build fragile apps. Network engineers who ignore code repeat manual work forever. This is the bridge: what actually happens between &quot;fetch()&quot; and the server, and how to debug it when it breaks.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://mmdrz-n.github.io/posts/the-bridge-packet-flow.html">
+  <meta property="article:published_time" content="2026-10-02">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "The Bridge: Why Every Developer Should Understand Packet Flow", "description": "Developers who ignore networking build fragile apps. Network engineers who ignore code repeat manual work forever. This is the bridge: what actually happens between \"fetch()\" and the server, and how to debug it when it breaks.", "datePublished": "2026-10-02", "author": {"@type": "Person", "name": "Mohammadreza Nobahari", "url": "https://mmdrz-n.github.io/"}, "mainEntityOfPage": "https://mmdrz-n.github.io/posts/the-bridge-packet-flow.html"}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/blog.css">
+  <link rel="stylesheet" href="../css/post.css">
+</head>
+<body>
+
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav aria-label="Primary">
+  <a href="../index.html" class="nav-logo" aria-label="Mohammadreza Nobahari, home"><span class="logo-mark" aria-hidden="true">MN</span><span class="logo-text">Mohammadreza Nobahari</span></a>
+  <div class="nav-actions">
+    <a class="nav-home" href="../index.html">Home</a>
+    <a class="nav-home" href="../blog.html">Writing</a>
+    <a class="btn btn-primary btn-sm" href="../index.html#contact">Contact</a>
+  </div>
+</nav>
+
+<main id="main" class="post-main">
+  <article>
+    <div class="crumbs"><a href="../blog.html">Writing</a> / Network security</div>
+    <header class="article-head">
+      <div class="post-cat">Network security</div>
+      <h1>The Bridge: Why Every Developer Should Understand Packet Flow</h1>
+      <p class="article-lede">Developers who ignore networking build fragile apps. Network engineers who ignore code repeat manual work forever. This is the bridge: what actually happens between &quot;fetch()&quot; and the server, and how to debug it when it breaks.</p>
+      <div class="article-meta"><time datetime="2026-10-02">Oct 02, 2026</time><span>4 min read</span><span>by Mohammadreza Nobahari</span></div>
+    </header>
+    <div class="prose">
+<h2>"It works on my machine" is a network statement</h2>
+<p>Most production bugs that get escalated to the network team are not network bugs. And most "the app is slow" tickets that land with developers are not code bugs. Both sides lose hours because nobody owns the space <em>between</em> the code and the cable.</p>
+<p>You don't need a CCNP to cross that gap. You need a mental model of what one request does on its way out of your laptop, and a handful of commands to check each step. That's what this post gives you.</p>
+
+<h2>The life of one HTTPS request</h2>
+<p>Take a boring line of code: <code>fetch("https://api.example.com/users")</code>. Before a single byte of your JSON arrives, roughly six things have to go right:</p>
+<ol>
+  <li><strong>DNS.</strong> The OS asks a resolver for the IP of <code>api.example.com</code>. Wrong answer, stale cache or split-horizon DNS here, and everything after is aimed at the wrong place.</li>
+  <li><strong>Routing decision.</strong> Your machine compares that IP against its routing table. Not in your own subnet? The packet goes to the <strong>default gateway</strong>.</li>
+  <li><strong>ARP.</strong> To hand the packet to the gateway, your NIC needs the gateway's MAC address. ARP asks "who has 192.168.1.1?" on the local segment.</li>
+  <li><strong>Firewall policy, session and NAT.</strong> Your first SYN to port 443 hits the edge firewall. It checks its policy, creates a session entry and rewrites your private source IP to a public one, remembering the mapping so the reply can find its way back. This is where firewalls decide whether you get to talk at all.</li>
+  <li><strong>TCP handshake.</strong> SYN → SYN-ACK → ACK completes through that session.</li>
+  <li><strong>TLS handshake.</strong> Certificates, SNI, cipher negotiation. Inspection proxies and expired intermediate certificates live here.</li>
+</ol>
+<p>Only after all six does HTTP happen. When a request "hangs", the question is simply: <strong>which of these six steps didn't finish?</strong></p>
+
+<h2>Timeout vs. refused: the most useful distinction in debugging</h2>
+<p>If you only remember one thing from this post, make it this:</p>
+<table>
+  <thead><tr><th>Symptom</th><th>What it usually means</th><th>Where to look</th></tr></thead>
+  <tbody>
+    <tr><td><code>Connection refused</code> (instant)</td><td>The host is reachable and answered with a TCP RST. Nothing listens on that port.</td><td>Service down, wrong port, app bound to <code>127.0.0.1</code> only</td></tr>
+    <tr><td><code>Connection timed out</code> (slow)</td><td>Packets are silently dropped. Nobody answered at all.</td><td>Firewall policy, security group, missing route, wrong IP</td></tr>
+    <tr><td><code>Could not resolve host</code></td><td>Step 1 failed.</td><td>DNS resolver, hosts file, VPN DNS settings</td></tr>
+    <tr><td>TLS / certificate error</td><td>TCP worked, step 5 failed.</td><td>Certificate chain, SNI, SSL inspection proxy</td></tr>
+    <tr><td>Small requests work, big ones hang</td><td>Almost always MTU.</td><td>VPN tunnels, PPPoE, blocked ICMP</td></tr>
+  </tbody>
+</table>
+<div class="callout"><span class="callout-label">Rule</span><p>A firewall that <em>denies</em> usually <em>drops</em>. That's why a blocked port looks like a timeout, not an error. "Refused" means you got through the network and the server itself said no.</p></div>
+
+<h2>The MTU trap</h2>
+<p>Ethernet frames carry 1500 bytes of payload by default. Wrap traffic in an IPsec or WireGuard tunnel and some of those bytes go to headers, so the effective size shrinks. If something in the path also blocks ICMP "fragmentation needed" messages, large packets vanish silently while small ones pass. The login page loads, the file upload never finishes.</p>
+<p>You can test it in ten seconds. 1472 bytes of ICMP payload + 28 bytes of headers = exactly 1500:</p>
+<pre data-lang="powershell"><code># Windows: -f = don't fragment, -l = payload size
+ping -f -l 1472 api.example.com
+
+# Linux
+ping -M do -s 1472 api.example.com
+
+# macOS: -D sets the don't-fragment bit
+ping -D -s 1472 api.example.com</code></pre>
+<p>If 1472 fails but 1400 works, you've found your problem. Lower the size until it passes; that number + 28 is your real path MTU.</p>
+
+<h2>A developer's network toolkit</h2>
+<p>Each tool checks one step from the list above. Learn them in this order:</p>
+<pre data-lang="powershell"><code># 1. DNS: what IP does this name resolve to?
+Resolve-DnsName api.example.com        # Windows
+dig +short api.example.com             # Linux / macOS
+
+# 2-5. Can I reach the port at all? (routing + firewall + TCP)
+Test-NetConnection api.example.com -Port 443
+nc -vz api.example.com 443
+
+# 6. Full request with TLS details and timings
+curl -v https://api.example.com/health
+
+# Where does the path die?
+tracert api.example.com                # Windows
+traceroute api.example.com             # Linux / macOS
+
+# What is MY app actually listening on?
+netstat -ano | findstr LISTENING       # Windows
+ss -tlnp                               # Linux</code></pre>
+<div class="callout ok"><span class="callout-label">Tip</span><p>When you open a ticket with the network team, paste the output of <code>Test-NetConnection</code> and <code>curl -v</code>. A ticket with "TCP 443 to 10.20.0.15 times out from 10.10.5.22" gets fixed in minutes. "The API is broken" gets fixed on Thursday.</p></div>
+
+<h2>What network engineers can borrow from developers</h2>
+<p>The bridge goes both ways. Developers have spent twenty years building habits that infrastructure people are only now adopting:</p>
+<ul>
+  <li><strong>Version control</strong> for configs: a firewall policy change should have a diff and a reason, just like a pull request.</li>
+  <li><strong>Automation</strong> instead of copy-paste CLI sessions. I wrote about that in <a href="automating-fortigate-policies-python.html">Automating FortiGate Policies with Python</a>.</li>
+  <li><strong>Tests:</strong> a script that checks "can VLAN 20 still reach the file server?" after every change is a unit test for your network.</li>
+</ul>
+
+<h2>Takeaway</h2>
+<p>You don't need to become a network engineer. You need to know the six steps, the difference between a timeout and a refusal, and which command tests which step. That's the bridge. Walk it a few times and you'll never again lose a day to a problem that was "just the firewall".</p>
+    </div>
+    <div class="article-foot">
+      <div class="author-box">
+        <span class="logo-mark" aria-hidden="true">MN</span>
+        <p><strong>Mohammadreza Nobahari</strong>Network &amp; Security Engineer in Germany. I build secure networks, automate them with Python and teach how systems work. <a href="../index.html#contact">Get in touch</a>.</p>
+      </div>
+      <div class="post-nav" role="navigation" aria-label="More posts"><a class="prev" href="subnetting-in-your-head.html"><small>← Newer</small>Subnetting in Your Head: The Block-Size Method</a><a class="next" href="automating-fortigate-policies-python.html"><small>Older →</small>Automating FortiGate Policies with Python</a></div>
+    </div>
+  </article>
+  <aside class="toc" aria-label="On this page">
+    <div class="toc-title">On this page</div>
+    <ol id="toc-list"></ol>
+    <div class="toc-share">
+      <button class="chip" type="button" id="copy-link">Copy link</button>
+      <a class="chip" href="https://www.linkedin.com/sharing/share-offsite/?url=https://mmdrz-n.github.io/posts/the-bridge-packet-flow.html" target="_blank" rel="noopener">Share on LinkedIn</a>
+    </div>
+  </aside>
+</main>
+
+<div class="footer-wrap">
+  <footer>
+    <p>© 2026 Mohammadreza Nobahari · Network &amp; Security Engineer · Python Automation · Educator</p>
+    <div class="footer-links">
+      <a href="../feed.xml">RSS</a>
+      <a href="https://www.linkedin.com/in/mohammadreza-nobahari-54370526a" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/mmdrz-n" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+</div>
+
+<script src="../js/post.js"></script>
+<script src="../js/posts-data.js"></script>
+<script src="../js/fun.js"></script>
+<script src="../js/bot.js"></script>
+</body>
+</html>

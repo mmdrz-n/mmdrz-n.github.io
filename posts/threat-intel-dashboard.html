@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building a Threat Intelligence Dashboard with Python · Mohammadreza Nobahari</title>
+  <meta name="description" content="Exported firewall logs are thousands of lines nobody reads. With about 80 lines of standard-library Python you can parse them, score suspicious behaviour and produce an HTML report your team will actually open in the weekly security meeting.">
+  <meta name="author" content="Mohammadreza Nobahari">
+  <link rel="canonical" href="https://mmdrz-n.github.io/posts/threat-intel-dashboard.html">
+  <link rel="alternate" type="application/rss+xml" title="Mohammadreza Nobahari · Writing" href="../feed.xml">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a1424'/%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%2338bdf8' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-size='26' font-weight='700' text-anchor='middle' fill='%2338bdf8'%3EMN%3C/text%3E%3C/svg%3E">
+  <meta property="og:title" content="Building a Threat Intelligence Dashboard with Python">
+  <meta property="og:description" content="Exported firewall logs are thousands of lines nobody reads. With about 80 lines of standard-library Python you can parse them, score suspicious behaviour and produce an HTML report your team will actually open in the weekly security meeting.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://mmdrz-n.github.io/posts/threat-intel-dashboard.html">
+  <meta property="article:published_time" content="2026-09-03">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Building a Threat Intelligence Dashboard with Python", "description": "Exported firewall logs are thousands of lines nobody reads. With about 80 lines of standard-library Python you can parse them, score suspicious behaviour and produce an HTML report your team will actually open in the weekly security meeting.", "datePublished": "2026-09-03", "author": {"@type": "Person", "name": "Mohammadreza Nobahari", "url": "https://mmdrz-n.github.io/"}, "mainEntityOfPage": "https://mmdrz-n.github.io/posts/threat-intel-dashboard.html"}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/blog.css">
+  <link rel="stylesheet" href="../css/post.css">
+</head>
+<body>
+
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav aria-label="Primary">
+  <a href="../index.html" class="nav-logo" aria-label="Mohammadreza Nobahari, home"><span class="logo-mark" aria-hidden="true">MN</span><span class="logo-text">Mohammadreza Nobahari</span></a>
+  <div class="nav-actions">
+    <a class="nav-home" href="../index.html">Home</a>
+    <a class="nav-home" href="../blog.html">Writing</a>
+    <a class="btn btn-primary btn-sm" href="../index.html#contact">Contact</a>
+  </div>
+</nav>
+
+<main id="main" class="post-main">
+  <article>
+    <div class="crumbs"><a href="../blog.html">Writing</a> / Labs</div>
+    <header class="article-head">
+      <div class="post-cat">Labs</div>
+      <h1>Building a Threat Intelligence Dashboard with Python</h1>
+      <p class="article-lede">Exported firewall logs are thousands of lines nobody reads. With about 80 lines of standard-library Python you can parse them, score suspicious behaviour and produce an HTML report your team will actually open in the weekly security meeting.</p>
+      <div class="article-meta"><time datetime="2026-09-03">Sep 03, 2026</time><span>3 min read</span><span>by Mohammadreza Nobahari</span></div>
+    </header>
+    <div class="prose">
+<h2>The goal</h2>
+<p>We want a script that takes a log export from FortiGate or FortiAnalyzer and answers three questions:</p>
+<ol>
+  <li><strong>Who is scanning us?</strong> Sources hitting many different ports.</li>
+  <li><strong>Who is knocking on sensitive doors?</strong> Repeated attempts on SSH, RDP, SMB.</li>
+  <li><strong>What did the IPS consider serious?</strong> High and critical signatures.</li>
+</ol>
+<p>The output is a single HTML file, sorted by severity. No database, no framework, nothing to install except Python 3.</p>
+
+<h2>Step 1: understand the log format</h2>
+<p>FortiOS logs are <code>key=value</code> pairs, with quotes around values that may contain spaces. Two typical lines (IPs from documentation ranges):</p>
+<pre data-lang="log"><code>date=2026-09-01 time=10:15:02 devname="FGT-HQ" type="traffic" subtype="forward" level="notice" srcip=203.0.113.45 srcport=51544 dstip=198.51.100.10 dstport=22 proto=6 action="deny" policyid=0 service="SSH"
+date=2026-09-01 time=10:16:40 devname="FGT-HQ" type="utm" subtype="ips" level="alert" severity="critical" srcip=203.0.113.77 dstip=198.51.100.20 dstport=443 attack="Apache.Log4j.Error.Log.Remote.Code.Execution" action="dropped"</code></pre>
+<p>Export from FortiAnalyzer (<em>Log View → Download</em>) or from the FortiGate log view in raw format.</p>
+
+<h2>Step 2: parse it</h2>
+<p>Python's <code>shlex</code> module already knows how to split a line on spaces while respecting quotes. That makes the parser tiny:</p>
+<pre data-lang="python"><code>import shlex
+
+def parse_line(line):
+    record = {}
+    try:
+        tokens = shlex.split(line)
+    except ValueError:  # truncated line / unbalanced quote: skip it, don't crash the report
+        return record
+    for token in tokens:
+        key, sep, value = token.partition("=")
+        if sep:
+            record[key] = value
+    return record
+
+def load(path):
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        return [parse_line(line) for line in fh if line.strip()]</code></pre>
+<p>Each log line becomes a dictionary like <code>{"srcip": "203.0.113.45", "dstport": "22", "action": "deny", …}</code>.</p>
+
+<h2>Step 3: score suspicious behaviour</h2>
+<p>Keep the rules simple and explainable. A security team trusts a report it understands. Every finding is a tuple of <code>(severity, source, message)</code>:</p>
+<pre data-lang="python"><code>from collections import Counter, defaultdict
+
+SENSITIVE = {"22": "SSH", "23": "Telnet", "445": "SMB", "3389": "RDP"}
+
+def score(records):
+    findings = []
+    denies = [r for r in records if r.get("action") == "deny"]
+
+    # 1. Port scans: one source, many distinct destination ports
+    ports_by_src = defaultdict(set)
+    for r in denies:
+        ports_by_src[r.get("srcip")].add(r.get("dstport"))
+    for src, ports in ports_by_src.items():
+        if len(ports) &gt;= 20:
+            findings.append(("high", src, f"Port scan: {len(ports)} distinct ports denied"))
+
+    # 2. Repeated attempts on sensitive services
+    hits = Counter((r.get("srcip"), r.get("dstport")) for r in denies if r.get("dstport") in SENSITIVE)
+    for (src, port), n in hits.items():
+        if n &gt;= 10:
+            findings.append(("medium", src, f"{n} denied attempts on {SENSITIVE[port]} ({port})"))
+
+    # 3. IPS events the FortiGate itself rated high or critical
+    for r in records:
+        if r.get("subtype") == "ips" and r.get("severity") in ("high", "critical"):
+            findings.append(("high", r.get("srcip"), f"IPS {r.get('severity')}: {r.get('attack')}"))
+
+    return findings</code></pre>
+<div class="callout"><span class="callout-label">Tune it</span><p>The thresholds (20 ports, 10 attempts) are starting points. Run the script on a week of normal logs first and adjust until the report shows things you'd actually act on. A report that cries wolf gets ignored.</p></div>
+
+<h2>Step 4: render the report</h2>
+<p>An HTML table is enough. The important detail is <code>html.escape</code>: log fields come from the network, which means they come from attackers. Never paste them into HTML unescaped.</p>
+<pre data-lang="python"><code>from datetime import date
+from html import escape
+
+ORDER = {"high": 0, "medium": 1, "low": 2}
+
+def render(findings, path="report.html"):
+    rows = "\n".join(
+        f"&lt;tr class='{sev}'&gt;&lt;td&gt;{sev.upper()}&lt;/td&gt;&lt;td&gt;{escape(str(src))}&lt;/td&gt;&lt;td&gt;{escape(msg)}&lt;/td&gt;&lt;/tr&gt;"
+        for sev, src, msg in sorted(findings, key=lambda f: ORDER[f[0]])
+    )
+    page = f"""&lt;!doctype html&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;&lt;title&gt;Threat report {date.today()}&lt;/title&gt;
+&lt;style&gt;
+  body {{ font-family: system-ui, sans-serif; margin: 2rem; }}
+  table {{ border-collapse: collapse; width: 100%; }}
+  td, th {{ padding: .5rem; border-bottom: 1px solid #ddd; text-align: left; }}
+  .high td:first-child {{ color: #b91c1c; font-weight: 700; }}
+  .medium td:first-child {{ color: #b45309; font-weight: 700; }}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+&lt;h1&gt;Threat report: {date.today()}&lt;/h1&gt;
+&lt;p&gt;{len(findings)} findings&lt;/p&gt;
+&lt;table&gt;&lt;tr&gt;&lt;th&gt;Severity&lt;/th&gt;&lt;th&gt;Source&lt;/th&gt;&lt;th&gt;Finding&lt;/th&gt;&lt;/tr&gt;
+{rows}
+&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;"""
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(page)
+
+if __name__ == "__main__":
+    import sys
+    render(score(load(sys.argv[1])))</code></pre>
+<p>Run it with <code>python report.py fortigate-export.log</code> and open <code>report.html</code>.</p>
+
+<h2>Step 5: automate it</h2>
+<ul>
+  <li><strong>Schedule it:</strong> Windows Task Scheduler or a cron job every Monday morning, so the report is ready before the meeting.</li>
+  <li><strong>Enrich it:</strong> add a reverse-DNS lookup or country information for source IPs.</li>
+  <li><strong>Trend it:</strong> save the findings as JSON each week and compare. "Scans up 300% since last week" is a much better conversation starter than a raw list.</li>
+</ul>
+<div class="callout warn"><span class="callout-label">Scope</span><p>This is a lab-grade tool for learning and small environments. At scale, the same logic belongs in FortiAnalyzer event handlers or a SIEM. Building it yourself first is how you learn what those tools are actually doing.</p></div>
+
+<h2>What you learned</h2>
+<p>Parsing, aggregating, scoring and safe rendering: the same four steps behind every commercial security dashboard. Once you've built a small one yourself, the big ones stop being magic. You'll know what questions to ask them.</p>
+    </div>
+    <div class="article-foot">
+      <div class="author-box">
+        <span class="logo-mark" aria-hidden="true">MN</span>
+        <p><strong>Mohammadreza Nobahari</strong>Network &amp; Security Engineer in Germany. I build secure networks, automate them with Python and teach how systems work. <a href="../index.html#contact">Get in touch</a>.</p>
+      </div>
+      <div class="post-nav" role="navigation" aria-label="More posts"><a class="prev" href="learn-like-a-gamer.html"><small>← Newer</small>Learn Like a Gamer, Work Like a Pro</a></div>
+    </div>
+  </article>
+  <aside class="toc" aria-label="On this page">
+    <div class="toc-title">On this page</div>
+    <ol id="toc-list"></ol>
+    <div class="toc-share">
+      <button class="chip" type="button" id="copy-link">Copy link</button>
+      <a class="chip" href="https://www.linkedin.com/sharing/share-offsite/?url=https://mmdrz-n.github.io/posts/threat-intel-dashboard.html" target="_blank" rel="noopener">Share on LinkedIn</a>
+    </div>
+  </aside>
+</main>
+
+<div class="footer-wrap">
+  <footer>
+    <p>© 2026 Mohammadreza Nobahari · Network &amp; Security Engineer · Python Automation · Educator</p>
+    <div class="footer-links">
+      <a href="../feed.xml">RSS</a>
+      <a href="https://www.linkedin.com/in/mohammadreza-nobahari-54370526a" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://github.com/mmdrz-n" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </footer>
+</div>
+
+<script src="../js/post.js"></script>
+<script src="../js/posts-data.js"></script>
+<script src="../js/fun.js"></script>
+<script src="../js/bot.js"></script>
+</body>
+</html>

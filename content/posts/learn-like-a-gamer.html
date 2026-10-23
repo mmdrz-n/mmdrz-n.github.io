@@ -1,0 +1,56 @@
+<!--
+title: Learn Like a Gamer, Work Like a Pro
+title_de: Lernen wie ein Gamer, arbeiten wie ein Profi
+category: career-strategy
+date: 2026-09-15
+lede: Games taught me persistence, pattern recognition and systems thinking long before I touched a CLI. Here's how to turn the way gamers learn into a practical strategy for getting good at networking and security.
+lede_de: Wie man das Lernprinzip guter Spiele – Tutorial-Insel, Level, Bosskämpfe, Skilltree – in eine praktische Strategie für Netzwerk- und Security-Wissen übersetzt.
+-->
+<h2>Games are learning machines</h2>
+<p>A good game teaches you a complex system without a single lecture. You start with almost nothing, get a safe place to fail, receive instant feedback, and level up in small steps. Then the game throws a boss at you that only works if you combine everything you learned.</p>
+<p>Now compare that with how most people try to learn IT: read 600 pages, memorise commands, take an exam, forget half of it. No wonder it doesn't stick. The idea of this post is simple: <strong>steal the game's design for your own learning.</strong></p>
+
+<h2>1. Every game starts with a tutorial island</h2>
+<p>You wouldn't fight the final boss at level 1. You also shouldn't learn firewalls on a production network. Build a lab where breaking things is free:</p>
+<ul>
+  <li><strong>Cisco Packet Tracer</strong> for switching, VLAN and routing basics.</li>
+  <li><strong>GNS3 or EVE-NG</strong> once you want real device images and multi-vendor topologies.</li>
+  <li><strong>A FortiGate-VM</strong> (Fortinet offers an evaluation license) to practise policies, NAT and VPNs.</li>
+  <li><strong>Hyper-V or VirtualBox</strong> with a couple of Linux and Windows VMs as clients and servers.</li>
+</ul>
+<p>The lab is your save point. Snapshot it before every experiment and you'll experiment much more boldly.</p>
+
+<h2>2. Levels, not shortcuts</h2>
+<p>Games gate content for a reason: the skills of level 5 assume level 4. Networking works the same way. My order looks roughly like this:</p>
+<ol>
+  <li>IP addressing and subnetting (seriously, master <a href="subnetting-in-your-head.html">subnetting</a> first)</li>
+  <li>Switching: VLANs, trunks, STP</li>
+  <li>Routing: static, then OSPF</li>
+  <li>Firewalls: policies, NAT, sessions</li>
+  <li>VPNs, then security profiles (IPS, web filter, SSL inspection)</li>
+  <li>Automation with Python once you understand what you're automating</li>
+</ol>
+<p>Skipping levels is how people end up copy-pasting configs they can't debug.</p>
+
+<h2>3. Grinding vs. deliberate practice</h2>
+<p>Grinding is killing the same easy enemy a thousand times. It feels productive and teaches you almost nothing. Deliberate practice is fighting the enemy you keep losing to, on purpose, until you don't.</p>
+<p>In the lab that means: don't rebuild the same working topology ten times. <strong>Break it on purpose.</strong> Shut down the wrong interface, put a typo in a mask, create asymmetric routing, then troubleshoot it with only <code>ping</code>, <code>traceroute</code> and debug output. Each broken lab is a boss fight with a known solution.</p>
+
+<h2>4. Boss fights are incidents</h2>
+<p>In games, losing a boss fight is information. You learn the pattern, adjust, try again. Real outages deserve the same mindset: not "whose fault was it?" but "what pattern did we miss?"</p>
+<p>After every incident, even small ones in the lab, write three lines:</p>
+<ul>
+  <li><strong>What happened</strong> (symptom)</li>
+  <li><strong>Why</strong> (root cause, not the first thing you fixed)</li>
+  <li><strong>What changes</strong> so it can't happen the same way again</li>
+</ul>
+
+<h2>5. Build your skill tree</h2>
+<p>RPGs show you a skill tree so you can plan where to put points. Draw yours. Literally: a page with Network, Security and Development branches, and every skill you have or want. Colour what you can do confidently, what you've touched, and what's next.</p>
+<p>It turns "I should learn more" into "next month: OSPF multi-area and one Python script that reads interface status". That's a quest, and quests get finished.</p>
+
+<h2>6. Co-op mode: teach it</h2>
+<p>The fastest way to find the gaps in your knowledge is to explain it to someone else. Write a short post, record a two-minute explanation, help a colleague in the lab. If you can't explain why a packet took a certain path, you don't fully understand it yet, and now you know exactly what to study next.</p>
+
+<h2>Game over? No: New Game+</h2>
+<p>Certifications are checkpoints, not the end credits. Technology keeps shipping new content: new FortiOS versions, new attack techniques, new tools. The people who stay good at this are the ones who never stopped enjoying the game. Pick your next level and press start.</p>

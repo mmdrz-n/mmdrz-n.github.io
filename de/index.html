@@ -87,6 +87,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="alternate" type="application/rss+xml" title="Mohammadreza Nobahari · Writing" href="https://mmdrz-n.github.io/feed.xml">
 </head>
 <body>
 
@@ -118,8 +119,8 @@
     <li><a href="#skills">Kompetenzen</a></li>
     <li><a href="#projects">Projekte</a></li>
     <li><a href="#lab">Lab</a></li>
-    <li><a href="blog.html">Blog</a></li>
-    <li><a href="#digital">Digitale Welt</a></li>
+    <li><a href="#arcade">Arcade</a></li>
+    <li><a href="#writing">Blog</a></li>
     <li><a href="#contact">Kontakt</a></li>
   </ul>
   <div class="nav-right">
@@ -137,7 +138,8 @@
   <a href="#skills">Kompetenzen</a>
   <a href="#projects">Projekte</a>
   <a href="#lab">Wissenslabor</a>
-  <a href="blog.html">Blog</a>
+  <a href="#arcade">Arcade</a>
+  <a href="#writing">Blog</a>
   <a href="#digital">Digitale Welt</a>
   <a href="#contact">Kontakt</a>
   <div class="lang-switch" role="group" aria-label="Sprache">
@@ -432,10 +434,77 @@
   </div>
 </section>
 
-<section id="digital">
+<section id="arcade">
   <div class="container">
     <div class="section-header reveal">
       <div class="section-num">06</div>
+      <h2 class="section-title">Arcade</h2>
+      <div class="section-line"></div>
+    </div>
+    <p class="lab-intro reveal">Lernen sollte sich wie ein Spiel anfühlen. Spielen Sie Subnet Sprint gegen die Uhr oder stöbern Sie im Terminal. Probieren Sie <code>help</code>, <code>ping</code>, <code>sudo hire-me</code> … und vielleicht einen gewissen berühmten Cheat-Code.</p>
+    <div class="arcade-grid reveal">
+      <div class="lab-panel sprint" id="sprint">
+        <div class="sprint-top">
+          <h3 class="sprint-title">Subnet Sprint <small>60 Sekunden · Subnetting &amp; Ports · Tasten 1–4 funktionieren auch</small></h3>
+        </div>
+        <div class="sprint-stats">
+          <div class="sprint-stat"><b data-score>0</b><small>Punkte</small></div>
+          <div class="sprint-stat"><b data-best>0</b><small>Rekord</small></div>
+          <div class="sprint-stat"><b data-streak>0</b><small>Serie</small></div>
+          <div class="sprint-stat"><b data-time>60</b><small>Zeit</small></div>
+        </div>
+        <div class="sprint-bar" aria-hidden="true"><span></span></div>
+        <p class="sprint-q" aria-live="polite">Wie schnell können Sie subnetten? Beantworten Sie so viele Fragen wie möglich, bevor die Zeit abläuft.</p>
+        <div class="sprint-opts"></div>
+        <div class="sprint-feedback" aria-live="polite"></div>
+        <div class="sprint-foot">
+          <button class="btn btn-primary" id="sprint-start" type="button">Sprint starten</button>
+          <small>Hängen geblieben? Lesen Sie <a href="../posts/subnetting-in-your-head.html">Subnetting in your head</a> (Englisch).</small>
+        </div>
+      </div>
+      <div data-terminal></div>
+    </div>
+    <p class="term-hint reveal">Tipp: Drücken Sie auf jeder Seite <kbd>^</kbd> (die Taste links neben der 1), um das <button type="button" data-open-terminal>Terminal zu öffnen</button>, oder <button type="button" data-open-bot>fragen Sie MN-Bot</button> alles über mich.</p>
+  </div>
+</section>
+
+<section id="writing">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-num">07</div>
+      <h2 class="section-title">Neueste Beiträge</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="latest-grid reveal">
+<!-- LATEST:START -->
+    <a class="post post-link" href="../posts/fortigate-debug-flow-cheatsheet.html" data-category="network-security">
+      <div class="post-cat">Netzwerksicherheit <span class="post-lang">EN</span></div>
+      <h3>FortiGate Debug Flow: Ein praktischer Spickzettel</h3>
+      <p>Die genaue Befehlsfolge, wie man die Ausgabe liest, und die fünf Meldungen, die 90 % aller verworfenen Pakete erklären.</p>
+      <div class="post-meta">20. Okt. 2026 · 3 Min. Lesezeit</div>
+    </a>
+    <a class="post post-link" href="../posts/subnetting-in-your-head.html" data-category="labs">
+      <div class="post-cat">Labs <span class="post-lang">EN</span></div>
+      <h3>Subnetting im Kopf: Die Blockgrößen-Methode</h3>
+      <p>Eine kleine Tabelle und eine Division: Netz, Broadcast und Hostbereich jeder IPv4-Adresse in unter zehn Sekunden – mit durchgerechneten Beispielen.</p>
+      <div class="post-meta">12. Okt. 2026 · 3 Min. Lesezeit</div>
+    </a>
+    <a class="post post-link" href="../posts/the-bridge-packet-flow.html" data-category="network-security">
+      <div class="post-cat">Netzwerksicherheit <span class="post-lang">EN</span></div>
+      <h3>Die Brücke: Warum jeder Entwickler den Paketfluss verstehen sollte</h3>
+      <p>Was zwischen „fetch()“ und dem Server wirklich passiert, der Unterschied zwischen Timeout und „Connection refused“ und die Befehle, mit denen Entwickler jeden Schritt selbst prüfen.</p>
+      <div class="post-meta">2. Okt. 2026 · 4 Min. Lesezeit</div>
+    </a>
+<!-- LATEST:END -->
+    </div>
+    <div class="section-cta reveal"><a class="btn btn-outline" href="blog.html">Alle Beiträge</a></div>
+  </div>
+</section>
+
+<section id="digital">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-num">08</div>
       <h2 class="section-title">Digitale Welt</h2>
       <div class="section-line"></div>
     </div>
@@ -471,7 +540,7 @@
 <section id="contact">
   <div class="container">
     <div class="section-header narrow reveal">
-      <div class="section-num">07</div>
+      <div class="section-num">09</div>
       <h2 class="section-title">Kontakt</h2>
       <div class="section-line"></div>
     </div>
@@ -501,10 +570,14 @@
       <a href="https://www.linkedin.com/in/mohammadreza-nobahari-54370526a" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-linkedin"/></svg> LinkedIn</a>
       <a href="https://github.com/mmdrz-n" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg> GitHub</a>
       <a href="mailto:mreza.nobahari@gmail.com"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg> E-Mail</a>
+      <a href="../feed.xml">RSS</a>
     </div>
   </footer>
 </div>
 
 <script src="../js/main.js"></script>
+<script src="../js/posts-data.js"></script>
+<script src="../js/fun.js"></script>
+<script src="../js/bot.js"></script>
 </body>
 </html>

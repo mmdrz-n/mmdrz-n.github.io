@@ -1,0 +1,120 @@
+<!--
+title: Building a Threat Intelligence Dashboard with Python
+title_de: Ein Threat-Intelligence-Dashboard mit Python bauen
+category: labs
+date: 2026-09-03
+lede: Exported firewall logs are thousands of lines nobody reads. With about 80 lines of standard-library Python you can parse them, score suspicious behaviour and produce an HTML report your team will actually open in the weekly security meeting.
+lede_de: Firewall-Logs parsen, verdächtiges Verhalten bewerten und einen HTML-Bericht erzeugen, den das Team im wöchentlichen Security-Meeting wirklich öffnet – nur mit der Standardbibliothek.
+-->
+<h2>The goal</h2>
+<p>We want a script that takes a log export from FortiGate or FortiAnalyzer and answers three questions:</p>
+<ol>
+  <li><strong>Who is scanning us?</strong> Sources hitting many different ports.</li>
+  <li><strong>Who is knocking on sensitive doors?</strong> Repeated attempts on SSH, RDP, SMB.</li>
+  <li><strong>What did the IPS consider serious?</strong> High and critical signatures.</li>
+</ol>
+<p>The output is a single HTML file, sorted by severity. No database, no framework, nothing to install except Python 3.</p>
+
+<h2>Step 1: understand the log format</h2>
+<p>FortiOS logs are <code>key=value</code> pairs, with quotes around values that may contain spaces. Two typical lines (IPs from documentation ranges):</p>
+<pre data-lang="log"><code>date=2026-09-01 time=10:15:02 devname="FGT-HQ" type="traffic" subtype="forward" level="notice" srcip=203.0.113.45 srcport=51544 dstip=198.51.100.10 dstport=22 proto=6 action="deny" policyid=0 service="SSH"
+date=2026-09-01 time=10:16:40 devname="FGT-HQ" type="utm" subtype="ips" level="alert" severity="critical" srcip=203.0.113.77 dstip=198.51.100.20 dstport=443 attack="Apache.Log4j.Error.Log.Remote.Code.Execution" action="dropped"</code></pre>
+<p>Export from FortiAnalyzer (<em>Log View → Download</em>) or from the FortiGate log view in raw format.</p>
+
+<h2>Step 2: parse it</h2>
+<p>Python's <code>shlex</code> module already knows how to split a line on spaces while respecting quotes. That makes the parser tiny:</p>
+<pre data-lang="python"><code>import shlex
+
+def parse_line(line):
+    record = {}
+    try:
+        tokens = shlex.split(line)
+    except ValueError:  # truncated line / unbalanced quote: skip it, don't crash the report
+        return record
+    for token in tokens:
+        key, sep, value = token.partition("=")
+        if sep:
+            record[key] = value
+    return record
+
+def load(path):
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        return [parse_line(line) for line in fh if line.strip()]</code></pre>
+<p>Each log line becomes a dictionary like <code>{"srcip": "203.0.113.45", "dstport": "22", "action": "deny", …}</code>.</p>
+
+<h2>Step 3: score suspicious behaviour</h2>
+<p>Keep the rules simple and explainable. A security team trusts a report it understands. Every finding is a tuple of <code>(severity, source, message)</code>:</p>
+<pre data-lang="python"><code>from collections import Counter, defaultdict
+
+SENSITIVE = {"22": "SSH", "23": "Telnet", "445": "SMB", "3389": "RDP"}
+
+def score(records):
+    findings = []
+    denies = [r for r in records if r.get("action") == "deny"]
+
+    # 1. Port scans: one source, many distinct destination ports
+    ports_by_src = defaultdict(set)
+    for r in denies:
+        ports_by_src[r.get("srcip")].add(r.get("dstport"))
+    for src, ports in ports_by_src.items():
+        if len(ports) >= 20:
+            findings.append(("high", src, f"Port scan: {len(ports)} distinct ports denied"))
+
+    # 2. Repeated attempts on sensitive services
+    hits = Counter((r.get("srcip"), r.get("dstport")) for r in denies if r.get("dstport") in SENSITIVE)
+    for (src, port), n in hits.items():
+        if n >= 10:
+            findings.append(("medium", src, f"{n} denied attempts on {SENSITIVE[port]} ({port})"))
+
+    # 3. IPS events the FortiGate itself rated high or critical
+    for r in records:
+        if r.get("subtype") == "ips" and r.get("severity") in ("high", "critical"):
+            findings.append(("high", r.get("srcip"), f"IPS {r.get('severity')}: {r.get('attack')}"))
+
+    return findings</code></pre>
+<div class="callout"><span class="callout-label">Tune it</span><p>The thresholds (20 ports, 10 attempts) are starting points. Run the script on a week of normal logs first and adjust until the report shows things you'd actually act on. A report that cries wolf gets ignored.</p></div>
+
+<h2>Step 4: render the report</h2>
+<p>An HTML table is enough. The important detail is <code>html.escape</code>: log fields come from the network, which means they come from attackers. Never paste them into HTML unescaped.</p>
+<pre data-lang="python"><code>from datetime import date
+from html import escape
+
+ORDER = {"high": 0, "medium": 1, "low": 2}
+
+def render(findings, path="report.html"):
+    rows = "\n".join(
+        f"<tr class='{sev}'><td>{sev.upper()}</td><td>{escape(str(src))}</td><td>{escape(msg)}</td></tr>"
+        for sev, src, msg in sorted(findings, key=lambda f: ORDER[f[0]])
+    )
+    page = f"""<!doctype html>
+<html><head><meta charset="utf-8"><title>Threat report {date.today()}</title>
+<style>
+  body {{ font-family: system-ui, sans-serif; margin: 2rem; }}
+  table {{ border-collapse: collapse; width: 100%; }}
+  td, th {{ padding: .5rem; border-bottom: 1px solid #ddd; text-align: left; }}
+  .high td:first-child {{ color: #b91c1c; font-weight: 700; }}
+  .medium td:first-child {{ color: #b45309; font-weight: 700; }}
+</style></head><body>
+<h1>Threat report: {date.today()}</h1>
+<p>{len(findings)} findings</p>
+<table><tr><th>Severity</th><th>Source</th><th>Finding</th></tr>
+{rows}
+</table></body></html>"""
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(page)
+
+if __name__ == "__main__":
+    import sys
+    render(score(load(sys.argv[1])))</code></pre>
+<p>Run it with <code>python report.py fortigate-export.log</code> and open <code>report.html</code>.</p>
+
+<h2>Step 5: automate it</h2>
+<ul>
+  <li><strong>Schedule it:</strong> Windows Task Scheduler or a cron job every Monday morning, so the report is ready before the meeting.</li>
+  <li><strong>Enrich it:</strong> add a reverse-DNS lookup or country information for source IPs.</li>
+  <li><strong>Trend it:</strong> save the findings as JSON each week and compare. "Scans up 300% since last week" is a much better conversation starter than a raw list.</li>
+</ul>
+<div class="callout warn"><span class="callout-label">Scope</span><p>This is a lab-grade tool for learning and small environments. At scale, the same logic belongs in FortiAnalyzer event handlers or a SIEM. Building it yourself first is how you learn what those tools are actually doing.</p></div>
+
+<h2>What you learned</h2>
+<p>Parsing, aggregating, scoring and safe rendering: the same four steps behind every commercial security dashboard. Once you've built a small one yourself, the big ones stop being magic. You'll know what questions to ask them.</p>
